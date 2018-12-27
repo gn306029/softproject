@@ -1,0 +1,226 @@
+<script type="text/javascript">
+	$(".Bar").on("click","#Publish",function(){
+		let mBody = `
+			<div class='row justify-content-center align-items-center'>
+				<div class='col-md-6'>
+					<form id='ann-form'>
+		                <div class='ann-header form-group'>
+		                	<label for='new-ann-title'>
+		                		標題：
+		                	</label>
+		                	<input type='text' id='new-ann-title' name='new-ann-title' class='form-control'/>
+		                </div>
+		                <div class='ann-input-content'>
+		                	<label for='new-ann-content'>
+		                		內容：
+		                	</label>
+		                	<textarea id='new-ann-content' name='new-ann-content' class='form-control'>
+		                	</textarea>
+		                </div>
+	                </form>
+	                <hr/>
+	            </div>
+            </div>
+            <div class='row justify-content-center align-items-center'>
+            	<div class='col-md-6 text-right'>
+            		<button type='button' id='CreateAnn' class='btn btn-success'>儲存</button>
+            	</div>
+            	<div class='col-md-6 text-left'>
+            		<button type='button' id='CancelCreate' class='btn btn-default'>取消</button>
+            	</div>
+            </div>
+		`;
+		$("#content").html(mBody);
+	});
+
+	$(".Bar").on("click","#DeleteAnn",function(){
+		$("#delete-ann").show();
+		$("#select-u-ann").hide();
+		$("#search-ann").hide();
+		$.ajax({
+			url:"/Order/Api/Announcement/All/",
+			method:"GET",
+			data:{
+				Key:key
+			},
+			dataType:"json",
+			success:function(res){
+				let selectAnn = `<select name='select-ann' class='form-control'>`;
+				for(let i in res["table"]){
+					selectAnn += `<option value='${res["table"][i]["AnnID"]}'>${res["table"][i]["Title"]}</option>`;
+				}
+				ShowModal("刪除資訊",selectAnn,"modal-ann");
+			}
+		});
+	});
+
+	$(".Bar").on("click","#UpdateAnn",function(){
+		$("#select-u-ann").show();
+		$("#delete-ann").hide();
+		$("#search-ann").hide();
+		$.ajax({
+			url:"/Order/Api/Announcement/All/",
+			method:"GET",
+			data:{
+				Key:key
+			},
+			dataType:"json",
+			success:function(res){
+				let selectAnn = `<select name='select-ann' class='form-control'>`;
+				for(let i in res["table"]){
+					selectAnn += `<option value='${res["table"][i]["AnnID"]}'>${res["table"][i]["Title"]}</option>`;
+				}
+				ShowModal("選擇欲更新公告",selectAnn,"modal-ann");
+			}
+		});
+	});
+
+	$("#content").on("click","#CreateAnn",function(){
+		$.ajax({
+			url:"/Order/Api/Announcement/a/",
+			method:"POST",
+			data:{
+				"Key":key,
+				"eid":GetEID(),
+				"title":$("#new-ann-title").val(),
+				"content":$("#new-ann-content").val()
+			},
+			dataType:"json",
+			success:function(res){
+				if(res["status_code"] == 0){
+					alert("新增成功");
+					BackToIndex();
+				}else{
+					alert(res["status_message"]);
+				}
+			}
+		});
+	});
+
+	$("#content").on("click","#CancelCreate",function(){
+		BackToIndex();
+	});
+
+	$("#delete-ann").click(function(){
+		$.ajax({
+			url:"/Order/Api/Announcement/Delete/",
+			method:"PUT",
+			data:JSON.stringify({
+				Key:key,
+				aid:$("select[name=select-ann]").val()
+			}),
+			dataType:"json",
+			success:function(res){
+				if(res["status_code"] == 0){
+					location.reload();	
+				}else{
+					ShowModal("系統訊息",res["status_message"],"modal-ann");
+				}
+			}
+		});
+	});
+
+	$("#select-u-ann").click(function(){
+        $.ajax({
+            url: `http://localhost/Order/Api/Announcement/${$("select[name=select-ann]").val()}/`,
+            method: "GET",
+            data: {
+                "Key": key
+            },
+            dataType: "json",
+            success: function(res) {
+            	HideModal("modal-ann");
+                res = res["table"];
+                let mBody = `
+					<div class='row justify-content-center align-items-center'>
+						<div class='col-md-6'>
+							<form id='ann-form'>
+				                <div class='ann-header form-group'>
+				                	<label for='new-ann-title'>
+				                		標題：
+				                	</label>
+				                	<input type='text' id='u-ann-title' name='new-ann-title' class='form-control' value='${res["Title"]}'/>
+				                </div>
+				                <div class='ann-input-content'>
+				                	<label for='new-ann-content'>
+				                		內容：
+				                	</label>
+				                	<textarea id='u-ann-content' name='new-ann-content' class='form-control'>
+				                		${res["Content"]}
+				                	</textarea>
+				                </div>
+			                </form>
+			                <hr/>
+			            </div>
+		            </div>
+		            <div class='row justify-content-center align-items-center'>
+		            	<div class='col-md-6 text-right'>
+		            		<button type='button' id='update-ann' class='btn btn-success' data-aid='${res["AnnID"]}'>儲存</button>
+		            	</div>
+		            </div>
+				`;
+				$("#content").html(mBody);
+            }
+        });
+	});
+
+	$("#content").on("click","#update-ann",function(){
+		$.ajax({
+			url:"/Order/Api/Announcement/Update/",
+			method:"PUT",
+			data:JSON.stringify({
+				Key:key,
+				aid:$(this).data("aid"),
+				nTitle:$("#u-ann-title").val(),
+				nContent:$("#u-ann-content").val()
+			}),
+			dataType:"json",
+			success:function(res){
+				if(res["status_code"] == 0){
+					location.reload();	
+				}else{
+					ShowModal("系統訊息",res["status_message"],"modal-ann");
+				}
+			}
+		});
+	})
+
+</script>
+<style type="text/css">
+	.ann-input-content{
+		padding-bottom: 1rem;
+	}
+</style>
+<div class="Bar row">
+	<div class="col-md-3">
+		<button class="btn btn-default" id='Publish'>發布公告</button>
+	</div>
+	<div class="col-md-3">
+		<button class="btn btn-default" id='DeleteAnn'>刪除公告</button>
+	</div>
+	<div class="col-md-3">
+		<button class="btn btn-default" id='UpdateAnn'>修改公告</button>
+	</div>
+	<div class="col-md-3">
+		<button class="btn btn-default" id='SearchAnn'>查詢公告</button>
+	</div>
+</div>
+<div id="modal-ann" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Modal title</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body"></div>
+            <div class="modal-footer">
+            	<button type="button" id='delete-ann' class="btn btn-danger">刪除</button>
+            	<button type="button" id='select-u-ann' class="btn btn-info">選擇</button>
+            	<button type="button" id='search-ann' class="btn btn-info">搜尋</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">關閉</button>
+            </div>
+        </div>
+    </div>
+</div>

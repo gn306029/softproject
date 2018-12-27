@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>登入</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script type="text/javascript" src="/Order/include/js/jquery.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="/Order/Include/css/main.css">
+    <script type="text/javascript">
+    	$(function(){
+    		$("#header").load("/Order/include/html/header.html");
+            $("#footer").load("/Order/include/html/footer.html");
+
+            $("#Login").click(function(){
+            	let Info = {
+            		"Account":$("#eid").val(),
+            		"Pwd":$("#pwd").val()
+            	}
+
+            	$.ajax({
+            		url:"/Order/Api/Login/",
+            		method:"POST",
+            		data:Info,
+            		dataType:"json",
+            		success:function(res){
+            			if(res["status_code"] == 0){
+                            SetKey(res["key"]);
+                            SetEID($("#eid").val());
+                            SetPer(res["permission"]);
+            				window.location.href = `/Order/Api/Index/${res["key"]}/`;
+            			}else{
+            				alert(res["message"]);
+            			}
+            		},
+            		error:function(res){
+            			console.log(res);
+            		}
+            	});
+
+            	return false;
+            });
+    	});
+    </script>
+</head>
+
+<body>
+    <div id="header"></div>
+    <div id="content" class="container">
+    	<div class="row justify-content-center align-items-center" style="height: 80vh;">
+            <div class="col-lg-4 col-md-6 offset-lg-0 offset-md-3 border border-dark rounded" style="padding:2vh;">
+                <br>
+                <form role="form" onsubmit="event.preventDefault(); Login();">
+                    <div class="form-group">
+                        <label for="eid">
+                            員工編號
+                        </label>
+                        <input type="text" class="form-control" id="eid" />
+                    </div>
+                    <div class="form-group">
+                        <label for="pwd">
+                            密碼
+                        </label>
+                        <input type="password" class="form-control" id="pwd" />
+                    </div>
+                    <div class="text-center">
+                        <button id='Login' type="button" class="btn btn-primary">
+                            登入
+                        </button>
+                        <!-- &nbsp;| <a href="registered.html">註冊</a> -->
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div id="footer"></div>
+</body>
+
+</html>

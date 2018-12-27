@@ -1,0 +1,104 @@
+<script type="text/javascript">
+function GetKey() {
+    return sessionStorage.getItem("Key");
+}
+
+function SetKey(key) {
+    sessionStorage.setItem("Key", key);
+}
+
+function GetEID() {
+    return sessionStorage.getItem("EID");
+}
+
+function SetEID(eid) {
+    sessionStorage.setItem("EID", eid);
+}
+
+function SetPer(per) {
+    sessionStorage.setItem("Per", per);
+}
+
+function GetPer() {
+    return sessionStorage.getItem("Per");
+}
+
+function SetHref() {
+    if (GetKey() != null) {
+        $("#functionList a").removeClass("hide");
+        $("#SysLogin").addClass("hide");
+        $("#OrderManager").attr("href", "/Order/Api/Order/Index/");
+        $("#SalesManager").attr("href", "/Order/Api/Sales/Index/");
+        $("#VisitManager").attr("href", "/Order/Api/Visit/Index/");
+    } else {
+        $("#functionList a").addClass("hide");
+        $("#SysLogin").removeClass("hide");
+        $("#OrderManager").attr("href", "");
+        $("#SalesManager").attr("href", "");
+        $("#VisitManager").attr("href", "");
+    }
+}
+
+function BackToIndex() {
+    window.location.href = "/Order/";
+}
+
+function Logout() {
+
+    $.ajax({
+        url: "/Order/Api/Logout/",
+        method: "POST",
+        data: {
+            Key: GetKey()
+        },
+        dataType: "json",
+        success: function(res) {
+            if (res["status_code"] == 0) {
+                sessionStorage.removeItem("Key");
+                window.location.href = "/Order/Api/Access/Index/";
+            } else {
+                alert(res["message"]);
+            }
+        }
+    })
+
+}
+
+const ShowModal = (mTitle, mBody , modalID="modal") => {
+    $(`#${modalID} .modal-title`).text(mTitle);
+    $(`#${modalID} .modal-body`).html(mBody);
+    $(`#${modalID}`).modal('show');
+}
+
+const HideModal = (modalID="modal") =>{
+    $(`#${modalID}`).modal('hide');
+}
+</script>
+<nav class="navbar navbar-expand-lg navbar-light bg-light navbar-dark bg-dark">
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <a class="navbar-brand" href="/Order/">首頁</a>
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+        <ul class="navbar-nav ml-md-auto">
+            <li class="nav-item dropdown" id='functionList'>
+                <a href="/Order/Api/Access/Index/" id="SysLogin">
+                    <button class="btn btn-outline-success" type="button">登入</button>
+                </a>
+                <a id="OrderManager" class='hide'>
+                    <button class="btn btn-outline-success" type="button">訂單管理</button>
+                </a>
+                <a id="SalesManager" class='hide'>
+                    <button class="btn btn-outline-success" type="button">業績資訊</button>
+                </a>
+                <a id="VisitManager" class='hide'>
+                    <button class="btn btn-outline-success" type="button">拜訪紀錄</button>
+                </a>
+                <a id="Lougout" class='hide' onClick="Logout()">
+                    <button class="btn btn-outline-success" type="button">登出</button>
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+<div id='bar-area' class="container"></div>

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>業績資訊</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script type="text/javascript" src="/Order/include/js/jquery.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="/Order/Include/css/main.css">
+    <script type="text/javascript">
+    $(function() {
+        let key;
+        let data;
+
+        $("#header").load("/Order/include/html/header.html", function() {
+            key = GetKey();
+            SetHref();
+            
+        });
+        $("#footer").load("/Order/include/html/footer.html");
+
+        $("#search-by-salesman").click(function(){
+
+            let html = `
+                <div class='container'>
+                    <div class='row'>
+                        <div class='col-12'>
+                            <div class='form-group'>
+                                <label for='s-input-eid'>
+                                    員工編號：
+                                </label>
+                                <input type='text' class='form-control' id='s-input-eid' name='s-input-eid' />
+                            </div>
+                            <div class='form-group'>
+                                <label for='s-input-ename'>
+                                    員工姓名：
+                                </label>
+                                <input type='text' class='form-control' id='s-input-ename' name='s-input-ename' />
+                            </div>
+                            <div class='form-group'>
+                                <label for='s-input-estart'>
+                                    查詢開始時間：
+                                </label>
+                                <input type='date' class='form-control' id='s-input-estart' name='s-input-estart' />
+                            </div>
+                            <div class='form-group'>
+                                <label for='s-input-end'>
+                                    查詢結束時間：
+                                </label>
+                                <input type='date' class='form-control' id='s-input-end' name='s-input-end' />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            $("#modal-sales").off("click","#Search-by-condition").on("click","#Search-by-condition",function(){
+                $.ajax({
+                    url:"/Order/Api/Sales/employee/",
+                    method:"GET",
+                    data:{
+                        Key:key,
+                        eid:$("#s-input-eid").val() == "" ? null : $("#s-input-eid").val(),
+                        eName:$("#s-input-ename").val() == "" ? null : $("#s-input-ename").val(),
+                        eStart:$("#s-input-estart").val() == "" ? null : $("#s-input-estart").val(),
+                        eEnd:$("#s-input-end").val() == "" ? null : $("#s-input-end").val()
+                    },
+                    dataType:"json",
+                    success:function(res){
+                        res = res["table"];
+                        let html = `
+                        <div class='row justify-content-center align-items-center'>
+                            <div class='col-12'>
+                                <table class='table table-responsive'>
+                                    <thead>
+                                        <th class='field'>業務編號</th>
+                                        <th class='field'>業務姓名</th>
+                                        <th class='field'>歷史業績總額</th>
+                                    </thead>
+                                    <tbody>
+                        `;
+
+                        for(let i in res){
+                            html += `
+                                <tr>
+                                    <td class='field'>${res[i]["EmployeeID"]}</td>
+                                    <td class='field'>${res[i]["EmployeeName"]}</td>
+                                    <td class='field'>${res[i]["Sales"]}</td>
+                                </tr>
+                            `;
+                        }
+
+                        html += `</tbody></table>`;
+                        $("#content").html(html);
+                        HideModal("modal-sales");
+                    }
+                });
+            });
+
+            ShowModal("條件搜尋",html,"modal-sales");
+            
+        });
+
+        $("#search-by-customer").click(function(){
+            $.ajax({
+                url:"/Order/Api/Sales/customerA/",
+                method:"GET",
+                data:{
+                    Key:key
+                },
+                dataType:"json",
+                success:function(res){
+                    res = res["table"];
+                    let html = `
+                    <div class='row justify-content-center align-items-center'>
+                        <div class='col-12'>
+                            <table class='table table-responsive'>
+                                <thead>
+                                    <th class='field'>客戶編號</th>
+                                    <th class='field'>客戶姓名</th>
+                                    <th class='field'>歷史購買總額</th>
+                                </thead>
+                                <tbody>
+                    `;
+
+                    for(let i in res){
+                        html += `
+                            <tr>
+                                <td class='field'>${res[i]["CustomerID"]}</td>
+                                <td class='field'>${res[i]["CustomerName"]}</td>
+                                <td class='field'>${res[i]["Sales"]}</td>
+                            </tr>
+                        `;
+                    }
+
+                    html += `</tbody></table>`;
+                    $("#content").html(html);
+                }
+            });
+        });
+    });
+    </script>
+</head>
+
+<body>
+	<div id="header"></div>
+    <div class="container">
+        <div class="row">
+            <div class='col-md-4'>
+                <button id='search-by-salesman' class='btn btn-info'>依業務查詢</button>
+            </div>
+            <div class='col-md-4'>
+                <button id='search-by-customer' class='btn btn-info'>依客戶查詢</button>
+            </div>
+            <div class='col-md-4'>
+                <button id='search-by-goods' class='btn btn-info'>依產品查詢</button>
+            </div>
+        </div>
+    </div>
+    <div id="content" class="container"></div>
+    <div id="footer"></div>
+    <div id="modal-sales" class="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Modal title</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body"></div>
+                <div class="modal-footer">
+                    <button id="Search-by-condition" type="button" class="btn btn-secondary">查詢</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">關閉</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

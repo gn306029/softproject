@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>訂單管理</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script type="text/javascript" src="/Order/include/js/jquery.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="/Order/Include/css/main.css">
+    <script type="text/javascript">
+    $(function() {
+
+        let key;
+        let data;
+        let activeOid;
+
+        $("#header").load("/Order/include/html/header.html", function() {
+            key = GetKey();
+            SetHref();
+            $.ajax({
+                url: "http://localhost/Order/Api/Order/All/",
+                method: "GET",
+                data: {
+                    "Key": key
+                },
+                dataType: "json",
+                success: function(res) {
+
+                    if (res["status_code"] == -1) {
+                        BackToIndex();
+                        return;
+                    }
+
+                    let visiableData = "";
+                    for (let i in res["table"]) {
+                        visiableData += "<tr>";
+                        visiableData += `<td class='field must'><p class='showOrder' data-oid='${res["table"][i]["OrderID"]}'>${res["table"][i]["OrderID"]}</p></a></td>`;
+                        visiableData += `<td class='field must'>${res["table"][i]["CustomerName"]}</td>`;
+                        visiableData += `<td class='field option'>${res["table"][i]["EmployeeID"]}</td>`;
+                        visiableData += `<td class='field must'>${res["table"][i]["CreateTime"]}</td>`;
+                        visiableData += "</tr>";
+                    }
+
+                    let html = `
+                            <div class='row showTable'>
+                                <table class='table table-responsive'>
+                                    <thead>
+                                        <th class='field must'>訂單編號</th>
+                                        <th class='field must'>客戶名稱</th>
+                                        <th class='field option'>負責員工</th>
+                                        <th class='field must'>建立時間</th>
+                                    </thead>
+                                    <tbody>
+                                        ${visiableData}
+                                    <tbody>
+                                </table>
+                            </div>
+                        `;
+                    $("#content").html(html);
+                },
+                error: function(res) {
+                    $("#content").html(res);
+                }
+            });
+        });
+        $("#footer").load("/Order/include/html/footer.html");
+
+
+        $("#content").on("click", ".showOrder", function() {
+            let self = this;
+            $.ajax({
+                url: "http://localhost/Order/Api/Order/" + $(this).data("oid") + "/",
+                method: "GET",
+                data: {
+                    "Key": key
+                },
+                jsonType: true,
+                success: function(res) {
+
+                    let visiableData = "";
+                    res = JSON.parse(res)["table"];
+                    for (let i in res) {
+                        visiableData += "<tr>";
+                        visiableData += `<td class='field option'>${res[i]["ProductID"]}</a></td>`;
+                        visiableData += `<td class='field must'>${res[i]["ProductName"]}</td>`;
+                        visiableData += `<td class='field must'>${res[i]["Num"]}</td>`;
+                        visiableData += `<td class='field option'>${res[i]["Specification"]}</td>`;
+                        visiableData += `<td class='field must'>${res[i]["Price"]}</td>`;
+                        visiableData += `<td class='field option'>${res[i]["isGift"] == "0" ? "&#10004;" : ""}</td>`;
+                        visiableData += "</tr>";
+                    }
+
+                    let html = `
+                        <div class='order-detail showTable'>
+                            <table class='table table-responsive'>
+                                <thead>
+                                    <th class='field option'>產品編號</th>
+                                    <th class='field must'>產品名稱</th>
+                                    <th class='field must'>數量</th>
+                                    <th class='field option'>規格</th>
+                                    <th class='field must'>價格</th>
+                                    <th class='field option'>贈品</th>
+                                </thead>
+                                <tbody>
+                                    ${visiableData}
+                                <tbody>
+                            </table>
+                        </div>
+                    `;
+                    ShowModal($(self).data("oid") + " 訂單資訊" , html);
+                    activeOid = $(self).data("oid");
+                },
+                error: function(res) {
+                    $("#content").html(res);
+                }
+            });
+        });
+
+        // 取得客戶下拉選單
+        const GetCusList = () => {
+            return new Promise(resolve => {
+                let result = "";
+                $.ajax({
+                    url: "/Order/Api/Customer/All/",
+                    method: "GET",
+                    data: {
+                        "Key": key
+                    },
+                    dataType: "json",
+                    success: function(res) {
+                        if (res["status_code"] == 0) {
+                            result += "<select name='customerList' class='form-control'>"
+                            for (let i in res["table"]) {
+                                result += `
+                                    <option value='${res["table"][i]["CustomerID"]}'>
+                                    ${res["table"][i]["CustomerID"]} 
+                                    ${res["table"][i]["CustomerName"]}
+                                    </option>`;
+                            }
+                            result += "</select>";
+                        }
+                        resolve(result);
+                    }
+                });
+            });
+        }
+        // 取得產品下拉選單
+        const GetProductList = (default_select=null) => {
+            return new Promise(resolve => {
+                let result = "";
+                $.ajax({
+                    url: "/Order/Api/Products/All/",
+                    method: "GET",
+                    data: {
+                        "Key": key
+                    },
+                    dataType: "json",
+                    success: function(res) {
+                        if (res["status_code"] == 0) {
+                            productItem = res["table"];
+                            result += `<select name='productList' class='selectProd form-control' value=${default_select ? default_select : "null"}>
+                                        <option value='null'>請選擇...</option>`
+                            for (let i in res["table"]) {
+                                result += `
+                                    <option value='${res["table"][i]["ProductID"]}'>
+                                    ${res["table"][i]["ProductID"]} 
+                                    ${res["table"][i]["ProductName"]}
+                                    </option>`;
+                            }
+                            result += "</select>";
+                        }
+                        resolve([result, res["table"]]);
+                    }
+                });
+            });
+        }
+        // 新增明細
+        const AddNewItem = (pList , options=null) => {
+            if(options == null){
+                return `
+                    <tr>
+                        <td class='field'>
+                            ${pList}
+                        </td>
+                        <td class='field'>
+                            <input class='form-control' type='text' name='Specification'/>
+                        </td>
+                        <td class='field'>
+                            <input class='form-control' type='number' name='Num'/>
+                        </td>
+                        <td class='field'>
+                            <input class='form-control' type='number' name='Price'/>
+                        </td>
+                        <td class='field'>
+                            <input class='form-control' type='checkbox' name='isGift'/>
+                        </td>
+                        <td class='field'>
+                            <button type='button' class='removeItem btn btn-danger'>移除</button>
+                        </td>
+                    </tr>
+                `;
+            }else{
+                return `
+                    <tr>
+                        <td class='field'>
+                            ${pList}
+                        </td>
+                        <td class='field'>
+                            <input class='form-control' type='text' name='Specification' value=${options.Spec ? `"${options.Spec}"` : ""}/>
+                        </td>
+                        <td class='field'>
+                            <input class='form-control' type='number' name='Num' value=${options.Num ? `"${options.Num}"` : ""}/>
+                        </td>
+                        <td class='field'>
+                            <input class='form-control' type='number' name='Price' value=${options.Price ? `"${options.Price}"` : ""}/>
+                        </td>
+                        <td class='field'>
+                            <input class='form-control' type='checkbox' name='isGift' value=${options.isGift ? options.Gift : ""}
+                             ${options.Gift == 1 ? "" : "checked"}/>
+                        </td>
+                        <td class='field'>
+                            <button type='button' class='removeItem btn btn-danger'>移除</button>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        const GetBasicInfo = async(callback) => {
+            let customerList = await GetCusList();
+            let [productList, productItem] = await GetProductList();
+            callback && callback(customerList, productList, productItem);
+        }
+
+        $("#CreateOrder").click(function() {
+
+            let customerList;
+            let productList;
+            let productItem;
+            GetBasicInfo(function(cList, pList, pItem) {
+                customerList = cList;
+                productList = pList;
+                productItem = pItem;
+
+                let CreateHtml = `
+                    <div class="createview form-control">
+                        <form id="newInfo">
+                            <div class="form-group">
+                                <label>
+                                    負責員工：${GetEID()}
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label for="customerList">
+                                    客戶編號：
+                                </label>
+                                ${customerList}
+                            </div>
+                            <div class="form-group">
+                                <label for="CreateTime">
+                                    成立時間：
+                                </label>
+                                <input class='form-control' type='datetime-local' id='CreateTime' name='CreateTime'></input>
+                            </div>
+                            <div class='row'>
+                                <div class='col-sm-6 col-md-6 col-lg-6'>
+                                    <h1>訂單明細</h1>
+                                </div>
+                                <div class='col-sm-6 col-md-6 col-lg-6 text-right' style='padding-top: .5rem;'>
+                                    <button class='btn btn-info' id='AddItem' type='button'>
+                                        新增明細
+                                    </button>
+                                    <button class='btn btn-success' id='Create' type='button'>
+                                        建立訂單
+                                    </button>
+                                </div>
+                            </div>
+                            <hr/>
+                            <table class='table table-responsive'>
+                                <thead>
+                                    <tr>
+                                        <th class='field'>產品編號</th>
+                                        <th class='field'>規格</th>
+                                        <th class='field'>數量</th>
+                                        <th class='field'>單價</th>
+                                        <th class='field'>贈品</th>
+                                    </tr>
+                                </thead>
+                                <tbody id='detail-content'></tbody>
+                            </table>
+                        </form>
+                    </div>
+                `;
+
+                $("#content").html(CreateHtml);
+            });
+
+            $("#content").off("click", "#AddItem").on("click", "#AddItem", function() {
+                $("#detail-content").append(AddNewItem(productList));
+            });
+
+            $("#content").on("click", "#Create", function() {
+
+                // 去除沒有資料的 Detail 欄位
+                let orderdetail = $("select[name=productList]").map(function() {
+                    let parentRow = $(this).parent().parent();
+                    return {
+                        "ProductID": $(this).val(),
+                        "Num": $(parentRow).children().eq(2).find("input").val(),
+                        "Price": $(parentRow).children().eq(3).find("input").val(),
+                        "Specification": $(parentRow).children().eq(1).find("input").val(),
+                        "IsGift": $(parentRow).children().eq(2).find("input").prop("checked") ? 0 : 1
+                    }
+                }).get();
+
+                orderdetail = orderdetail.filter(function(e, i) {
+                    if (e["ProductID"] != "null") {
+                        return e;
+                    }
+                });
+
+                if(orderdetail.length == 0){
+                    alert("訂單明細為空");
+                    return;
+                }
+
+                $.ajax({
+                    url: "/Order/Api/Order/a/",
+                    method: "POST",
+                    data: {
+                        "Key": key,
+                        "cid": $("select[name=customerList]").val(),
+                        "eid": GetEID(),
+                        "Date": $("#CreateTime").val(),
+                        "Detail": JSON.stringify(orderdetail)
+                    },
+                    dataType: "json",
+                    success: function(res) {
+                        if (res["status_code"] == 0) {
+                            alert("新增成功");
+                            location.reload();
+                        } else {
+                            console.log(res);
+                            alert("新增失敗");
+                        }
+                    }
+                });
+            });
+        });
+
+        $("#ModifyOrder").click(function() {
+
+            let customerList;
+            let productList;
+            let productItem;
+
+            $("#modal").modal("hide");
+            GetBasicInfo(function(cList, pList, pItem) {
+
+                customerList = cList;
+                productList = pList;
+                productItem = pItem;
+                $.ajax({
+                    url: `/Order/Api/Order/${activeOid}/`,
+                    method: "GET",
+                    data: {
+                        "Key": key
+                    },
+                    dataType: "json",
+                    success: function(res) {
+                        let CreateHtml = `
+                            <div class="createview form-control">
+                                <form id="newInfo">
+                                    <div class="form-group">
+                                        <label>
+                                            訂單編號：${res["table"][0]["OrderID"]}
+                                        </label>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>
+                                            負責員工：${res["table"][0]["EmployeeID"]}
+                                        </label>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="customerList">
+                                            客戶編號：${res["table"][0]["CustomerID"]}
+                                        </label>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="CreateTime">
+                                            成立時間：${res["table"][0]["CreateTime"]}
+                                        </label>
+                                    </div>
+                                    <div class='row'>
+                                        <div class='col-sm-6 col-md-6 col-lg-6'>
+                                            <h1>訂單明細</h1>
+                                        </div>
+                                        <div class='col-sm-6 col-md-6 col-lg-6 text-right' style='padding-top: .5rem;'>
+                                            <button class='btn btn-info' id='AddItem' type='button'>
+                                                新增明細
+                                            </button>
+                                            <button class='btn btn-success' id='Update' type='button'>
+                                                更新訂單
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <hr/>
+                                    <table class='table table-responsive'>
+                                        <thead>
+                                            <tr>
+                                                <th class='field'>產品編號</th>
+                                                <th class='field'>規格</th>
+                                                <th class='field'>數量</th>
+                                                <th class='field'>單價</th>
+                                                <th class='field'>贈品</th>
+                                                <th class='field'></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id='detail-content'></tbody>
+                                    </table>
+                                </form>
+                            </div>
+                        `;
+
+                        $("#content").html(CreateHtml);
+
+                        for(let i in res["table"]){
+                            console.log(res["table"][i]["ProductID"])
+                            let info = {
+                                "Spec":res["table"][i]["Specification"],
+                                "Num":res["table"][i]["Num"],
+                                "Price":res["table"][i]["Price"],
+                                "Gift":res["table"][i]["isGift"]
+                            }
+                            $("#detail-content").append(AddNewItem(pList , info));
+                            $("#detail-content tr td select").last().val(res["table"][i]["ProductID"]);
+                        }
+
+                    }
+                });
+            });
+
+            $("#content").off("click", "#AddItem").on("click", "#AddItem", function() {
+                $("#detail-content").append(AddNewItem(productList));
+            });
+
+            $("#content").off("click", "#Update").on("click", "#Update", function() {
+                // 去除沒有資料的 Detail 欄位
+                let orderdetail = $("select[name=productList]").map(function() {
+                    let parentRow = $(this).parent().parent();
+                    return {
+                        "ProductID": $(this).val(),
+                        "Num": $(parentRow).children().eq(2).find("input").val(),
+                        "Price": $(parentRow).children().eq(3).find("input").val(),
+                        "Specification": $(parentRow).children().eq(1).find("input").val(),
+                        "IsGift": $(parentRow).children().eq(2).find("input").prop("checked") ? 0 : 1
+                    }
+                }).get();
+
+                orderdetail = orderdetail.filter(function(e, i) {
+                    if (e["ProductID"] != "null") {
+                        return e;
+                    }
+                });
+
+                if(orderdetail.length == 0){
+                    alert("訂單明細為空");
+                    return;
+                }
+
+                $.ajax({
+                    url: "/Order/Api/Order/a/",
+                    method: "PUT",
+                    data: JSON.stringify({
+                        "Key": key,
+                        "oid":activeOid,
+                        "cid": $("select[name=customerList]").val(),
+                        "eid": GetEID(),
+                        "Date": $("#CreateTime").val(),
+                        "Detail": JSON.stringify(orderdetail)
+                    }),
+                    dataType: "json",
+                    success: function(res) {
+                        if (res["status_code"] == 0) {
+                            alert("更新成功");
+                            location.reload();
+                        } else {
+                            console.log(res);
+                            alert("更新失敗");
+                        }
+                    }
+                });
+            });
+
+        });
+        
+        $('#SearchOrder').click(function() {
+            let SearchOrder = `
+                <div class = "SerchBar">
+                    <div class="d-inline-block">
+                        <input type="radio" id="OrderID" name="SearchKind" value="OrderID" >
+                        <label for="OrderID">訂單編號</label>
+                        <input type="radio" id="CustomerName" name="SearchKind" value="CustomerName" checked="true">
+                        <label for="CustomerID">客戶名稱</label>
+                        <input type="radio" id="EmployeeID" name="SearchKind" value="EmployeeID" >
+                        <label for="EmployeeID">負責員工</label>
+                        <input type="radio" id="date" name="SearchKind" value="date">
+                        <label for="date">建立時間</label>       
+                    </div>       
+                    <div class="d-inline-block" style="width:100px;">
+                    </div>
+                    <div class="d-inline-block">
+                        <div class="d-inline-block" id = "SearchBox">
+                            <input class="form-control" type="text" id="SearchInput" name="CustomerName">
+                        </div>
+                        <div class="d-inline-block">    
+                            <button class="btn btn-info" id="Search" type="button">搜尋</button>
+                        </div>
+                    </div>         
+                </div>
+                <div class='showTable'>
+                    <table class='table table-responsive'>
+                        <thead>
+                            <th class='field must'>訂單編號</th>
+                            <th class='field must'>客戶名稱</th>
+                            <th class='field option'>負責員工</th>
+                            <th class='field must'>建立時間</th>
+                        </thead>
+                        <tbody>
+                        <tbody>
+                    </table>
+                </div>
+            `;
+            $("#content").html(SearchOrder);
+            $("#content").off("click", "#date").on("click", "#date", function() {
+                let Today=new Date();
+                let SearchBox = `<input class="form-control" type="month" id="SearchInput" max="`+Today.getFullYear()+`-`+Today.getMonth()+`" name="date">`;
+                $("#SearchBox").html(SearchBox);
+            });
+            $("#content").off("click", "#EmployeeID").on("click", "#EmployeeID", function() {
+                let SearchBox = `<input class="form-control" type="text" id="SearchInput" name="EmployeeID">`;
+                $("#SearchBox").html(SearchBox);
+            });
+            $("#content").off("click", "#CustomerName").on("click", "#CustomerName", function() {
+                let SearchBox = `<input class="form-control" type="text" id="SearchInput" name="CustomerName">`;
+                $("#SearchBox").html(SearchBox);
+            });
+            $("#content").off("click", "#OrderID").on("click", "#OrderID", function() {
+                let SearchBox = `<input class="form-control" type="text" id="SearchInput" name="OrderID">`;
+                $("#SearchBox").html(SearchBox);
+            });
+            $("#content").off("click", "#Search").on("click", "#Search", function() {
+                key = GetKey();
+                $.ajax({
+                    url: "http://localhost/Order/Api/Order/Search/",
+                    method: "GET",
+                    data: {
+                        "Key": key,
+                        "SearchInput":$("#SearchInput").val(),
+                        "SearchKind":$("#SearchInput")[0].name
+                    },
+                    dataType: "json",
+                    success: function(res) {
+                        
+                        if (res["status_code"] == -1) {
+                            BackToIndex();
+                            return;
+                        }
+
+                        let visiableData = "";
+                        for (let i in res["table"]) {
+                            visiableData += "<tr>";
+                            visiableData += `<td class='field must'><p class='showOrder' data-oid='${res["table"][i]["OrderID"]}'>${res["table"][i]["OrderID"]}</p></a></td>`;
+                            visiableData += `<td class='field must'>${res["table"][i]["CustomerName"]}</td>`;
+                            visiableData += `<td class='field option'>${res["table"][i]["EmployeeID"]}</td>`;
+                            visiableData += `<td class='field must'>${res["table"][i]["CreateTime"]}</td>`;
+                            visiableData += "</tr>";
+                        }
+
+                        let html = `
+                                <div class='row showTable'>
+                                    <table class='table table-responsive'>
+                                        <thead>
+                                            <th class='field must'>訂單編號</th>
+                                            <th class='field must'>客戶名稱</th>
+                                            <th class='field option'>負責員工</th>
+                                            <th class='field must'>建立時間</th>
+                                        </thead>
+                                        <tbody>
+                                            ${visiableData}
+                                        <tbody>
+                                    </table>
+                                </div>
+                            `;
+                        $(".showTable").html(html);
+                    },
+                    error: function(res) {
+                        $("#content").html(res);
+                    }
+                });
+            });
+
+        });
+
+        $("#content").on("click",".removeItem",function(){
+            
+            $(this).parent().parent().remove();
+
+        });
+
+    });
+    </script>
+    <style type="text/css">
+    .showOrder:hover {
+        color: red;
+        cursor: pointer;
+    }
+    </style>
+</head>
+
+<body>
+    <div id="header"></div>
+    <div class="container">
+        <div class="row">
+            <div class='col-sm-4 col-md-4 col-lg-4'>
+                <button id="CreateOrder">
+                    新增訂單
+                </button>
+            </div>
+            <div class='col-sm-4 col-md-4 col-lg-4'>
+                <button id="SearchOrder">
+                    查詢訂單
+                </button>
+            </div>
+        </div>
+        <div class="row" id="content"></div>
+    </div>
+    <div id="footer"></div>
+    <div id="modal" class="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Modal title</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body"></div>
+                <div class="modal-footer">
+                    <button id="ModifyOrder" type="button" class="btn btn-secondary">修改</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">關閉</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

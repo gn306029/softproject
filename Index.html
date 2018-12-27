@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>公告訊息</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script type="text/javascript" src="/Order/include/js/jquery.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="/Order/Include/css/main.css">
+    <script type="text/javascript">
+
+    let key;
+    let data;
+    $(function() {
+        $("#header").load("/Order/include/html/header.html", function() {
+            key = GetKey();
+            SetHref();
+
+            if(GetPer() == 1){
+                $("#bar-area").load("/Order/modules/Announcement/ManagerBar.html");
+            }
+
+            $.ajax({
+                url: "/Order/Api/Announcement/All/",
+                method: "GET",
+                data: {
+                    "Key": key
+                },
+                dataType: "json",
+                success: function(res) {
+
+                    if (res["status_code"] == -1) {
+                        window.location.href = "/Order/Api/Access/Index/";
+                        return;
+                    }
+
+                    let visiableData = "";
+                    res = res["table"];
+
+                    for (let i in res) {
+                        visiableData += "<tr>";
+                        visiableData += `<td class='field must'>${res[i]["PublishDate"]}</td>`;
+                        visiableData += `<td class='field must'>${res[i]["EmployeeName"]}</td>`;
+                        visiableData += `<td class='field must'><p class='showContent' data-aid='${res[i]["AnnID"]}'>${res[i]["Title"]}<p></td>`;
+                        visiableData += "</tr>";
+                    }
+
+                    let html = `
+                    <div class='row showTable'>
+                        <table class='table table-responsive'>
+                            <thead>
+                                <th class='field must'>公告時間</th>
+                                <th class='field option'>發布人</th>
+                                <th class='field must'>標題</th>
+                            </thead>
+                            <tbody>
+                                ${visiableData}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+
+                    $("#content").html(html);
+                },
+                error: function(res) {
+                    $("#content").html(res["table"]);
+                }
+            });
+        });
+        $("#footer").load("/Order/include/html/footer.html");
+
+        $("#content").on("click", ".showContent", function() {
+            let self = this;
+            $.ajax({
+                url: `http://localhost/Order/Api/Announcement/${$(this).data("aid")}/`,
+                method: "GET",
+                data: {
+                    "Key": key
+                },
+                dataType: "json",
+                success: function(res) {
+                    res = res["table"];
+                    let annObject = "";
+
+                    let html = `
+                        <div class='ann-detail'>
+                            <div class='ann-header'>
+                                <h2>${res["Title"]}</h2>
+                                <p>發布者：${res["EmployeeName"]}</p>
+                                <p>發布時間：${res["PublishDate"]}</p>
+                            </div>
+                            <div class='ann-article'>
+                                <p>
+                                    ${res["Content"]}
+                                </p>
+                            </div>
+                            <div class='ann-object'>
+                            </div>
+                        </div>
+                    `;
+
+                    ShowModal($(self).data("aid") + " 公告資訊" , html);
+                },
+                error: function(res) {
+                    console.log(res);
+                    $("#content").html(res);
+                }
+            });
+
+        });
+
+    });
+    </script>
+    <style type="text/css">
+    .showContent {
+        cursor: pointer;
+        color: red;
+    }
+    
+    .ann-article {
+        min-height: 25vh;
+        padding: 1rem 0 1rem 1rem;
+        border: solid 1px #9e9ca0a6;
+        border-radius: 5px;
+    }
+    </style>
+</head>
+
+<body>
+    <div id="header"></div>
+    <div id="content" class="container h-100"></div>
+    <div id="footer"></div>
+    <div id="modal" class="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Modal title</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">關閉</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,87 @@
+# 开启 rewrite 功能
+RewriteEngine on
+RewriteBase /Order/
+
+# 系統首頁
+RewriteCond %{REQUEST_URI} /$ [NC]
+RewriteRule ^$ index.html [L]
+
+RewriteCond %{REQUEST_URI} Api/Index/(.*)/$ [NC]
+RewriteRule ^Api/Index/(.*)/$ index.html [L]
+
+# 登入首頁
+RewriteCond %{REQUEST_URI} Api/Access/Index/$ [NC]
+RewriteCond %{REQUEST_METHOD} GET
+RewriteRule ^Api/Access/Index/$ modules/Access/Index.html [L]
+
+# 檢查憑證
+RewriteCond %{REQUEST_URI} Api/Access/$ [NC]
+RewriteCond %{REQUEST_METHOD} POST
+RewriteRule ^Api/Access/$ RESTful/RestController.php?method=Access&do=CheckKey [QSA,L]
+
+# 登入
+RewriteCond %{REQUEST_URI} Api/Login/$ [NC]
+RewriteCond %{REQUEST_METHOD} POST
+RewriteRule ^Api/Login/$ RESTful/RestController.php?method=Access&do=Login [QSA,L]
+
+# 登出
+RewriteCond %{REQUEST_URI} Api/Logout/$ [NC]
+RewriteCond %{REQUEST_METHOD} POST
+RewriteRule ^Api/Logout/$ RESTful/RestController.php?method=Access&do=Logout [QSA,L]
+
+# Order API
+RewriteCond %{REQUEST_URI} Api/Order/Index/$ [NC]
+RewriteRule ^Api/Order/Index/$ modules/Order/Index.html [L]
+
+RewriteCond %{REQUEST_URI} Api/Order/(.*)/$ [NC]
+RewriteRule ^Api/Order/(.*)/$ RESTful/RestController.php?method=Order&data=$1 [QSA,L]
+
+# Visit API
+RewriteCond %{REQUEST_URI} Api/Visit/Index/$ [NC]
+RewriteRule ^Api/Visit/Index/$ modules/VisitRecord/Index.html [L]
+
+RewriteCond %{REQUEST_URI} Api/Visit/(.*)/$ [NC]
+RewriteRule ^Api/Visit/(.*)/$ RESTful/RestController.php?method=VisitRecord&data=$1 [QSA,L]
+
+# Product API
+RewriteCond %{REQUEST_URI} Api/Products/(.*)/$ [NC]
+RewriteRule ^Api/Products/([0-9,a-z,A-Z]*)/$ RESTful/RestController.php?method=Products&data=$1 [QSA,L]
+
+# Customer API
+RewriteCond %{REQUEST_URI} Api/Customer/(.*)/$ [NC]
+RewriteRule ^Api/Customer/([0-9,a-z,A-Z]*)/$ RESTful/RestController.php?method=Customer&data=$1 [QSA,L]
+
+# Employee API
+RewriteCond %{REQUEST_URI} Api/Employee/(.*)/$ [NC]
+RewriteRule ^Api/Employee/([0-9,a-z,A-Z]*)/$ RESTful/RestController.php?method=Employee&data=$1 [QSA,L]
+
+# Announcement API
+RewriteCond %{REQUEST_URI} Api/Announcement/([0-9,a-z,A-Z,\-]*)/$ [NC]
+RewriteRule ^Api/Announcement/([0-9,a-z,A-Z,\-]*)/$ RESTful/RestController.php?method=Announcement&data=$1 [QSA,L]
+
+# 歷史購買明細-以客戶查詢
+RewriteCond %{REQUEST_URI} Api/History/Customer/([0-9,a-z,A-Z]*)/$ [NC]
+RewriteCond %{REQUEST_METHOD} GET
+RewriteRule ^Api/History/Customer/([0-9,a-z,A-Z]*)/$ RESTful/RestController.php?method=History&do=C_Search&cid=$1 [QSA,L]
+
+# 歷史購買明細-以月份查詢
+RewriteCond %{REQUEST_URI} Api/History/Month/([0-9,\-]*)/$ [NC]
+RewriteCond %{REQUEST_METHOD} GET
+RewriteRule ^Api/History/Month/([0-9,\-]*)/$ RESTful/RestController.php?method=History&do=M_Search&month=$1 [QSA,L]
+
+# 歷史購買明細-以商品查詢
+RewriteCond %{REQUEST_URI} Api/History/Products/([0-9,a-z,A-Z]*)/$ [NC]
+RewriteCond %{REQUEST_METHOD} GET
+RewriteRule ^Api/History/Products/([0-9,a-z,A-Z]*)/$ RESTful/RestController.php?method=History&do=P_Search&pid=$1 [QSA,L]
+
+# 查詢業績
+RewriteCond %{REQUEST_URI} Api/Sales/Index/$ [NC]
+RewriteRule ^Api/Sales/Index/$ modules/Sales/Index.html [L]
+
+RewriteCond %{REQUEST_URI} Api/Sales/([0-9,a-z,A-Z]*)/$ [NC]
+RewriteRule ^Api/Sales/([0-9,a-z,A-Z]*)/$ RESTful/RestController.php?method=Sales&data=$1 [QSA,L]
+
+#不符合條件的請求
+RewriteCond %{REQUEST_URI} Api/(.*)$ [NC]
+RewriteRule ^Api/Sales/([0-9,a-z,A-Z]*)$ RESTful/RestController.php?method=&do= [QSA,L]
+

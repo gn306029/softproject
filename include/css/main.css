@@ -1,0 +1,33 @@
+* {
+    font-family: Microsoft JhengHei;
+}
+
+.hide{
+    display: none;
+}
+
+#content {
+    max-width: 100%;
+    padding: 1rem;
+}
+
+.field {
+    width: 1%;
+}
+
+.table {
+    max-width: 100vh;
+    min-width: fit-content;
+    margin: 0 auto;
+}
+
+.showTable {
+    width: 100%;
+    margin: 0 auto;
+}
+
+@media only screen and (max-width: 768px) {
+    .option {
+        display: none;
+    }
+}
