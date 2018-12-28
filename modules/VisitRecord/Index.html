@@ -38,7 +38,7 @@
                         visiableData += "<tr>";
                         visiableData += `<td class='field must'><p class='showOrder' data-oid='${res["table"][i]["VisitID"]}'>${res["table"][i]["VisitID"]}</p></a></td>`;
                         visiableData += `<td class='field option'>${res["table"][i]["EmployeeID"]}</td>`;
-                        visiableData += `<td class='field must'>${res["table"][i]["CustomerID"]}</td>`;
+                        visiableData += `<td class='field must'>${res["table"][i]["CustomerName"]}</td>`;
                         visiableData += `<td class='field must'>${res["table"][i]["VisitDate"]}</td>`;
                         visiableData += "</tr>";
                     }
@@ -71,7 +71,7 @@
         $("#content").on("click", ".showOrder", function() {
             let self = this;
             $.ajax({
-                url: "http://localhost:82/Order/Api/Order/" + $(this).data("oid") + "/",
+                url: "http://localhost/Order/Api/Visit/" + $(this).data("oid") + "/",
                 method: "GET",
                 data: {
                     "Key": key
@@ -81,23 +81,16 @@
 
                     let visiableData = "";
                     res = JSON.parse(res)["table"];
-                    for (let i in res) {
                         visiableData += "<tr>";
-                        visiableData += `<td class='field option'>${res[i]["Specification"]}</td>`;
+                        visiableData += `<td class='field option'><textarea class="form-control" id="Detail">${res[0]["Detail"]}</textarea></td>`;
                         visiableData += "</tr>";
-                    }
                     
                     //查詢紀錄的跳出視窗
                     let html = `
                         <div class='order-detail showTable'>
                             <table class='table table-responsive'>
                                 <thead>
-                                    <th class='field option'>產品編號</th>
-                                    <th class='field must'>產品名稱</th>
-                                    <th class='field must'>數量</th>
-                                    <th class='field option'>規格</th>
-                                    <th class='field must'>價格</th>
-                                    <th class='field option'>贈品</th>
+                                    <th class='field option'>詳情</th>
                                 </thead>
                                 <tbody>
                                     ${visiableData}
@@ -147,7 +140,7 @@
             return new Promise(resolve => {
                 let result = "";
                 $.ajax({
-                    url: "http://localhost:82/Order/Api/Products/All/",
+                    url: "http://localhost/Order/Api/Products/All/",
                     method: "GET",
                     data: {
                         "Key": key
@@ -219,6 +212,10 @@
                     <div class="createview form-control">
                         <form id="newInfo">
                             <div class="form-group">
+                                <label id = "VID">
+                                </label>
+                            </div>
+                            <div class="form-group">
                                 <label>
                                     負責員工：${GetEID()}
                                 </label>
@@ -240,9 +237,6 @@
                                     <h1>訪問記錄</h1>
                                 </div>
                                 <div class='col-sm-6 col-md-6 col-lg-6 text-right' style='padding-top: .5rem;'>
-                                    <button class='btn btn-info' id='AddItem' type='button'>
-                                        新增訪問記錄
-                                    </button>
                                     <button class='btn btn-success' id='Create' type='button'>
                                         建立紀錄
                                     </button>
@@ -255,49 +249,62 @@
                                         <th class='field'>詳情</th>
                                     </tr>
                                 </thead>
-                                <tbody id='detail-content'></tbody>
+                                <tbody id='detail-content'>
+                                    <tr>
+                                        <td class="field" colspan="2">
+                                            <textarea class="form-control" id="Detail"></textarea>
+                                        </td>
+                                    </tr>
+                                </tbody>
                             </table>
                         </form>
                     </div>
                 `;
 
                 $("#content").html(CreateHtml);
+                //此份拜訪紀錄ID
+                $.ajax({
+                        url: "http://localhost/Order/Api/Visit/Last/",
+                        method: "GET",
+                        data: {
+                            "Key": key
+                        },
+                        dataType: "json",
+                        success: function(res) {
+                            let VID = res["table"]["0"]["VID"];
+                            VID = parseInt(VID.substr(1))+1;
+                            VID = VID.toString();
+                            for (var i = 0; i <= 4-VID.length+1; i++) {
+                                VID = "0"+VID;
+                            }
+                            VID = "V"+VID;
+                            $("#VID").html("訪問紀錄編號："+VID);
+                            $("#VID").attr({
+                                name: VID
+                            });
+                        }
+                    });
             });
-
             $("#content").off("click", "#AddItem").on("click", "#AddItem", function() {
                 $("#detail-content").append(AddNewItem(productList));
             });
-
-            $("#content").on("click", "#Create", function() {
-
-                // 去除沒有資料的 Detail 欄位
-                // let orderdetail = $("select[name=productList]").map(function() {
-                //     // let parentRow = $(this).parent().parent();
-                //     // return {
-                //     //     "Specification": $(parentRow).children().eq(1).find("input").val()
-                //     // }
-                // }).get();
-
-                /*orderdetail = orderdetail.filter(function(e, i) {
-                    if (e["Specification"] != "null") {
-                        return e;
-                    }
-                });
-
-                if(orderdetail.length == 0){
-                    alert("訪問記錄為空");
-                    return;
-                }*/
-
+            $("#content").off("click", "#Create").on("click", "#Create", function() {
+                
+                //如果時間為空
+                let date = $("#CreateTime").val();
+                if (date == "") {
+                    date = "now";
+                }
                 $.ajax({
-                    url: "http://localhost:82/Order/Api/Order/a/",
+                    url: "http://localhost/Order/Api/Visit/NewRecord/",
                     method: "POST",
                     data: {
                         "Key": key,
+                        "vid": $("#VID")[0].attributes[1]["value"], 
                         "cid": $("select[name=customerList]").val(),
                         "eid": GetEID(),
-                        "Date": $("#CreateTime").val(),
-                        "Detail": JSON.stringify(orderdetail)
+                        "Date": date,
+                        "Detail": $("#Detail").val()
                     },
                     dataType: "json",
                     success: function(res) {
@@ -326,7 +333,7 @@
                 productList = pList;
                 productItem = pItem;
                 $.ajax({
-                    url: `http://localhost:82/Order/Api/Order/${activeOid}/`,
+                    url: `http://localhost/Order/Api/Order/${activeOid}/`,
                     method: "GET",
                     data: {
                         "Key": key
@@ -427,7 +434,7 @@
                 }
 
                 $.ajax({
-                    url: "http://localhost:82/Order/Api/Order/a/",
+                    url: "http://localhost/Order/Api/Order/a/",
                     method: "PUT",
                     data: JSON.stringify({
                         "Key": key,
@@ -456,14 +463,14 @@
             let SearchOrder = `
                 <div class = "SerchBar">
                     <div class="d-inline-block">
-                        <input type="radio" id="OrderID" name="SearchKind" value="OrderID" >
-                        <label for="OrderID">訂單編號</label>
+                        <input type="radio" id="VisitID" name="SearchKind" value="VisitID" >
+                        <label for="OrderID">訪問紀錄編號</label>
                         <input type="radio" id="CustomerName" name="SearchKind" value="CustomerName" checked="true">
                         <label for="CustomerID">客戶名稱</label>
                         <input type="radio" id="EmployeeID" name="SearchKind" value="EmployeeID" >
                         <label for="EmployeeID">負責員工</label>
-                        <input type="radio" id="date" name="SearchKind" value="date">
-                        <label for="date">建立時間</label>       
+                        <input type="radio" id="VisitDate" name="SearchKind" value="VisitDate">
+                        <label for="date">訪問時間</label>       
                     </div>       
                     <div class="d-inline-block" style="width:100px;">
                     </div>
@@ -479,10 +486,10 @@
                 <div class='showTable'>
                     <table class='table table-responsive'>
                         <thead>
-                            <th class='field must'>訂單編號</th>
+                            <th class='field must'>訪問紀錄編號</th>
                             <th class='field must'>客戶名稱</th>
                             <th class='field option'>負責員工</th>
-                            <th class='field must'>建立時間</th>
+                            <th class='field must'>訪問時間</th>
                         </thead>
                         <tbody>
                         <tbody>
@@ -490,9 +497,10 @@
                 </div>
             `;
             $("#content").html(SearchOrder);
-            $("#content").off("click", "#date").on("click", "#date", function() {
+            $("#content").off("click", "#VisitDate").on("click", "#VisitDate", function() {
                 let Today=new Date();
-                let SearchBox = `<input class="form-control" type="month" id="SearchInput" max="`+Today.getFullYear()+`-`+Today.getMonth()+`" name="date">`;
+                let SearchBox = `<input class="form-control" type="date" id="SearchInput" max="`+Today.getFullYear()+`-`+(Today.getMonth()+1)+`-`+Today.getDate()+`" name="VisitDate">`;
+                console.log(SearchBox);
                 $("#SearchBox").html(SearchBox);
             });
             $("#content").off("click", "#EmployeeID").on("click", "#EmployeeID", function() {
@@ -503,14 +511,14 @@
                 let SearchBox = `<input class="form-control" type="text" id="SearchInput" name="CustomerName">`;
                 $("#SearchBox").html(SearchBox);
             });
-            $("#content").off("click", "#OrderID").on("click", "#OrderID", function() {
-                let SearchBox = `<input class="form-control" type="text" id="SearchInput" name="OrderID">`;
+            $("#content").off("click", "#VisitID").on("click", "#VisitID", function() {
+                let SearchBox = `<input class="form-control" type="text" id="SearchInput" name="VisitID">`;
                 $("#SearchBox").html(SearchBox);
             });
             $("#content").off("click", "#Search").on("click", "#Search", function() {
                 key = GetKey();
                 $.ajax({
-                    url: "http://localhost:82/Order/Api/Order/Search/",
+                    url: "http://localhost/Order/Api/Visit/Search/",
                     method: "GET",
                     data: {
                         "Key": key,
@@ -520,18 +528,18 @@
                     dataType: "json",
                     success: function(res) {
                         
-                        if (res["status_code"] == -1) {
-                            BackToIndex();
-                            return;
-                        }
+                        // if (res["status_code"] == -1) {
+                        //     BackToIndex();
+                        //     return;
+                        // }
 
                         let visiableData = "";
                         for (let i in res["table"]) {
                             visiableData += "<tr>";
-                            visiableData += `<td class='field must'><p class='showOrder' data-oid='${res["table"][i]["OrderID"]}'>${res["table"][i]["OrderID"]}</p></a></td>`;
+                            visiableData += `<td class='field must'><p class='showOrder' data-oid='${res["table"][i]["VisitID"]}'>${res["table"][i]["VisitID"]}</p></a></td>`;
                             visiableData += `<td class='field must'>${res["table"][i]["CustomerName"]}</td>`;
                             visiableData += `<td class='field option'>${res["table"][i]["EmployeeID"]}</td>`;
-                            visiableData += `<td class='field must'>${res["table"][i]["CreateTime"]}</td>`;
+                            visiableData += `<td class='field must'>${res["table"][i]["VisitDate"]}</td>`;
                             visiableData += "</tr>";
                         }
 
@@ -539,10 +547,10 @@
                                 <div class='row showTable'>
                                     <table class='table table-responsive'>
                                         <thead>
-                                            <th class='field must'>訂單編號</th>
+                                            <th class='field must'>訪問紀錄編號</th>
                                             <th class='field must'>客戶名稱</th>
                                             <th class='field option'>負責員工</th>
-                                            <th class='field must'>建立時間</th>
+                                            <th class='field must'>訪問時間</th>
                                         </thead>
                                         <tbody>
                                             ${visiableData}

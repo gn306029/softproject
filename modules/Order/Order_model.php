@@ -240,7 +240,7 @@
                 FROM order_
                 LEFT JOIN customer ON order_.CustomerID = customer.CustomerID
                 WHERE ";
-            if($oid["SearchKind"]=="date"){
+            if($oid["SearchKind"]=="VisitDate"){
                 try {
                     $temp = explode("-", $oid["SearchInput"]);
                     $parm = array(
