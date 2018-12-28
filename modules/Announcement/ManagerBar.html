@@ -21,11 +21,9 @@ $(".Bar").on("click", "#Publish", function() {
 	                <hr/>
 	            </div>
             </div>
-            <div class='row justify-content-center align-items-center'>
-            	<div class='col-md-6 text-right'>
+            <div class='row justify-content-center align-items-center text-center'>
+            	<div class='col-md-12 col-sm-12'>
             		<button type='button' id='CreateAnn' class='btn btn-success'>儲存</button>
-            	</div>
-            	<div class='col-md-6 text-left'>
             		<button type='button' id='CancelCreate' class='btn btn-default'>取消</button>
             	</div>
             </div>
@@ -141,7 +139,7 @@ $("#search-ann").click(function() {
             for (let i in res) {
                 visiableData += "<tr>";
                 visiableData += `<td class='field must'>${res[i]["PublishDate"]}</td>`;
-                visiableData += `<td class='field must'>${res[i]["EmployeeName"]}</td>`;
+                visiableData += `<td class='field option'>${res[i]["EmployeeName"]}</td>`;
                 visiableData += `<td class='field must'><p class='showContent' data-aid='${res[i]["AnnID"]}'>${res[i]["Title"]}<p></td>`;
                 visiableData += "</tr>";
             }
@@ -281,18 +279,28 @@ $("#content").on("click", "#update-ann", function() {
 .ann-input-content {
     padding-bottom: 1rem;
 }
+.Bar{
+	text-align: center;
+    padding: 1rem;
+}
+.Bar button{
+	margin-top: .3rem;
+}
+.Bar .buttonRow{
+	width: fit-content;
+}
 </style>
 <div class="Bar row">
-    <div class="col-md-3">
+    <div class="buttonRow col-lg-3 col-md-3 col-sm-3 cols-xs-3">
         <button class="btn btn-default" id='Publish'>發布公告</button>
     </div>
-    <div class="col-md-3">
+    <div class="buttonRow col-lg-3 col-md-3 col-sm-3 cols-xs-3">
         <button class="btn btn-default" id='DeleteAnn'>刪除公告</button>
     </div>
-    <div class="col-md-3">
+    <div class="buttonRow col-lg-3 col-md-3 col-sm-3 cols-xs-3">
         <button class="btn btn-default" id='UpdateAnn'>修改公告</button>
     </div>
-    <div class="col-md-3">
+    <div class="buttonRow col-lg-3 col-md-3 col-sm-3 cols-xs-3">
         <button class="btn btn-default" id='SearchAnn'>查詢公告</button>
     </div>
 </div>

@@ -82,7 +82,7 @@
                     let visiableData = "";
                     res = JSON.parse(res)["table"];
                         visiableData += "<tr>";
-                        visiableData += `<td class='field option'><textarea class="form-control" id="Detail">${res[0]["Detail"]}</textarea></td>`;
+                        visiableData += `<td class='field must'><textarea class="form-control" id="Detail">${res[0]["Detail"]}</textarea></td>`;
                         visiableData += "</tr>";
                     
                     //查詢紀錄的跳出視窗
@@ -90,7 +90,7 @@
                         <div class='order-detail showTable'>
                             <table class='table table-responsive'>
                                 <thead>
-                                    <th class='field option'>詳情</th>
+                                    <th class='field must'>詳情</th>
                                 </thead>
                                 <tbody>
                                     ${visiableData}
@@ -98,7 +98,7 @@
                             </table>
                         </div>
                     `;
-                    ShowModal($(self).data("oid") + " 訂單資訊" , html);
+                    ShowModal($(self).data("oid") + " 公告資訊" , html);
                     activeOid = $(self).data("oid");
                 },
                 error: function(res) {
@@ -588,13 +588,11 @@
     <div id="header"></div>
     <div class="container">
         <div class="row">
-            <div class='col-sm-4 col-md-4 col-lg-4'>
-                <button id="CreateOrder">
+            <div class='col-sm col-md text-center' style='margin-top: .5rem;'>
+                <button id="CreateOrder" class='btn btn-info'>
                     新增拜訪紀錄
                 </button>
-            </div>
-            <div class='col-sm-4 col-md-4 col-lg-4'>
-                <button id="SearchOrder">
+                <button id="SearchOrder" class='btn btn-info'>
                     查詢拜訪紀錄
                 </button>
             </div>

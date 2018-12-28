@@ -63,7 +63,7 @@ $("#search-ann").click(function() {
             for (let i in res) {
                 visiableData += "<tr>";
                 visiableData += `<td class='field must'>${res[i]["PublishDate"]}</td>`;
-                visiableData += `<td class='field must'>${res[i]["EmployeeName"]}</td>`;
+                visiableData += `<td class='field option'>${res[i]["EmployeeName"]}</td>`;
                 visiableData += `<td class='field must'><p class='showContent' data-aid='${res[i]["AnnID"]}'>${res[i]["Title"]}<p></td>`;
                 visiableData += "</tr>";
             }
@@ -89,6 +89,12 @@ $("#search-ann").click(function() {
     })
 });
 </script>
+<style type="text/css">
+    .Bar{
+        text-align: center;
+        padding: 1rem;
+    }
+</style>
 <div class="Bar row">
     <div class="col-md-3">
         <button class="btn btn-default" id='SearchAnn'>查詢公告</button>
