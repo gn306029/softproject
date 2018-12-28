@@ -78,27 +78,27 @@
                 },
                 jsonType: true,
                 success: function(res) {
-
-                    let visiableData = "";
-                    res = JSON.parse(res)["table"];
-                        visiableData += "<tr>";
-                        visiableData += `<td class='field option'><textarea class="form-control" id="Detail">${res[0]["Detail"]}</textarea></td>`;
-                        visiableData += "</tr>";
                     
+                    res = JSON.parse(res)["table"];
+                    let visiableData = `<textarea class="form-control" id="Detail" cols="90" rows="20">${res[0]["Detail"]}</textarea>`;
+                    let VisitDate = res[0]["VisitDate"].replace(" ","T");
+                    VisitDate = VisitDate.slice(0,-3);
+                    let Today=new Date();
                     //查詢紀錄的跳出視窗
                     let html = `
                         <div class='order-detail showTable'>
-                            <table class='table table-responsive'>
-                                <thead>
-                                    <th class='field option'>詳情</th>
-                                </thead>
-                                <tbody>
-                                    ${visiableData}
-                                <tbody>
-                            </table>
+                            <div>
+                                <label>客戶名稱：${res[0]["CustomerName"]}</label>
+                            </div>
+                            <div>
+                                <label>訪視日期： <input class="form-control" type="datetime-local" id="VisitDate" max="`+Today.getFullYear()+`-`+(Today.getMonth()+1)+`-`+Today.getDate()+`T00:00" value="${VisitDate}" > </label>
+                            </div>
+                            <div>
+                                <label>詳情${visiableData}</label>
+                            </div>
                         </div>
                     `;
-                    ShowModal($(self).data("oid") + " 訂單資訊" , html);
+                    ShowModal($(self).data("oid") + " 訪問資訊" , html);
                     activeOid = $(self).data("oid");
                 },
                 error: function(res) {
@@ -312,7 +312,6 @@
                             alert("新增成功");
                             location.reload();
                         } else {
-                            console.log(res);
                             alert("新增失敗");
                         }
                     }
@@ -322,141 +321,25 @@
 
         $("#ModifyOrder").click(function() {
 
-            let customerList;
-            let productList;
-            let productItem;
-
             $("#modal").modal("hide");
-            GetBasicInfo(function(cList, pList, pItem) {
-
-                customerList = cList;
-                productList = pList;
-                productItem = pItem;
-                $.ajax({
-                    url: `http://localhost/Order/Api/Order/${activeOid}/`,
-                    method: "GET",
-                    data: {
-                        "Key": key
-                    },
-                    dataType: "json",
-                    success: function(res) {
-                        let CreateHtml = `
-                            <div class="createview form-control">
-                                <form id="newInfo">
-                                    <div class="form-group">
-                                        <label>
-                                            訂單編號：${res["table"][0]["OrderID"]}
-                                        </label>
-                                    </div>
-                                    <div class="form-group">
-                                        <label>
-                                            負責員工：${res["table"][0]["EmployeeID"]}
-                                        </label>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="customerList">
-                                            客戶編號：${res["table"][0]["CustomerID"]}
-                                        </label>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="CreateTime">
-                                            成立時間：${res["table"][0]["CreateTime"]}
-                                        </label>
-                                    </div>
-                                    <div class='row'>
-                                        <div class='col-sm-6 col-md-6 col-lg-6'>
-                                            <h1>訂單明細</h1>
-                                        </div>
-                                        <div class='col-sm-6 col-md-6 col-lg-6 text-right' style='padding-top: .5rem;'>
-                                            <button class='btn btn-info' id='AddItem' type='button'>
-                                                新增明細
-                                            </button>
-                                            <button class='btn btn-success' id='Update' type='button'>
-                                                更新訂單
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <hr/>
-                                    <table class='table table-responsive'>
-                                        <thead>
-                                            <tr>
-                                                <th class='field'>產品編號</th>
-                                                <th class='field'>規格</th>
-                                                <th class='field'>數量</th>
-                                                <th class='field'>單價</th>
-                                                <th class='field'>贈品</th>
-                                                <th class='field'></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id='detail-content'></tbody>
-                                    </table>
-                                </form>
-                            </div>
-                        `;
-
-                        $("#content").html(CreateHtml);
-
-                        for(let i in res["table"]){
-                            console.log(res["table"][i]["ProductID"])
-                            let info = {
-                                "Spec":res["table"][i]["Specification"]
-                            }
-                            $("#detail-content").append(AddNewItem(pList , info));
-                            $("#detail-content tr td select").last().val(res["table"][i]["ProductID"]);
-                        }
-
+            $.ajax({
+                url: `http://localhost/Order/Api/Visit/${activeOid}/`,
+                method: "PUT",
+                data: JSON.stringify({
+                    "Key": key,
+                    "VDate": $("#VisitDate").val(),
+                    "Detail": $("#Detail").val()
+                }),
+                dataType: "json",
+                success: function(res) {
+                    if (res["status_code"] == 0) {
+                        alert("更新成功");
+                        location.reload();
+                    } else {
+                        alert("更新失敗");
                     }
-                });
-            });
-
-            $("#content").off("click", "#AddItem").on("click", "#AddItem", function() {
-                $("#detail-content").append(AddNewItem(productList));
-            });
-
-            $("#content").off("click", "#Update").on("click", "#Update", function() {
-                // 去除沒有資料的 Detail 欄位
-                let orderdetail = $("select[name=productList]").map(function() {
-                    let parentRow = $(this).parent().parent();
-                    return {
-                        "Specification": $(parentRow).children().eq(1).find("input").val()
-                    }
-                }).get();
-
-                orderdetail = orderdetail.filter(function(e, i) {
-                    if (e["Specification"] != "null") {
-                        return e;
-                    }
-                });
-
-                if(orderdetail.length == 0){
-                    alert("訪問明細為空");
-                    return;
                 }
-
-                $.ajax({
-                    url: "http://localhost/Order/Api/Order/a/",
-                    method: "PUT",
-                    data: JSON.stringify({
-                        "Key": key,
-                        "oid":activeOid,
-                        "cid": $("select[name=customerList]").val(),
-                        "eid": GetEID(),
-                        "Date": $("#CreateTime").val(),
-                        "Detail": JSON.stringify(orderdetail)
-                    }),
-                    dataType: "json",
-                    success: function(res) {
-                        if (res["status_code"] == 0) {
-                            alert("更新成功");
-                            location.reload();
-                        } else {
-                            console.log(res);
-                            alert("更新失敗");
-                        }
-                    }
-                });
             });
-
         });
         
         $('#SearchOrder').click(function() {
@@ -500,7 +383,6 @@
             $("#content").off("click", "#VisitDate").on("click", "#VisitDate", function() {
                 let Today=new Date();
                 let SearchBox = `<input class="form-control" type="date" id="SearchInput" max="`+Today.getFullYear()+`-`+(Today.getMonth()+1)+`-`+Today.getDate()+`" name="VisitDate">`;
-                console.log(SearchBox);
                 $("#SearchBox").html(SearchBox);
             });
             $("#content").off("click", "#EmployeeID").on("click", "#EmployeeID", function() {

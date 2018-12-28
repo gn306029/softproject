@@ -94,11 +94,9 @@
         public function Update($dataArr){
             $putData = json_decode($dataArr["PUT"] , true);
             $MainData = array(
-                "vid"=>$putData["vid"],
-                "cid"=>$putData["cid"],
-                "eid"=>$putData["eid"],
-                "detail"=>$putData["detail"],
-                "Time"=>$this->getNowTime()
+                "Vid"=>$dataArr["GET"]["data"],
+                "detail"=>$putData["Detail"],
+                "VDate"=>$putData["VDate"]
             );
             $res = $this->UpdateVisitRecord($MainData);
             if($res["status_code"] == 0){
@@ -169,14 +167,12 @@
         private function UpdateVisitRecord($MainData){
 
             $sql = "UPDATE visitcustomerrecord
-                    SET CustomerID = :cid , EmployeeID = :eid , Detail = :detail , VisitDate = :time
+                    SET Detail = :detail , VisitDate = :t
                     WHERE VisitID = :vid";
 
             $parm = array(
-                ":vid"=>$MainData["vid"],
-                ":eid"=>$MainData["eid"],
-                ":cid"=>$MainData["cid"],
-                ":time"=>$MainData["Time"],
+                ":vid"=>$MainData["Vid"],
+                ":t"=>$MainData["VDate"],
                 ":detail"=>$MainData["detail"]
             );
 
