@@ -20,6 +20,8 @@
 
             if(GetPer() == 1){
                 $("#bar-area").load("/Order/modules/Announcement/ManagerBar.html");
+            }else{
+                $("#bar-area").load("/Order/modules/Announcement/NormalBar.html");
             }
 
             $.ajax({
@@ -42,25 +44,25 @@
                     for (let i in res) {
                         visiableData += "<tr>";
                         visiableData += `<td class='field must'>${res[i]["PublishDate"]}</td>`;
-                        visiableData += `<td class='field must'>${res[i]["EmployeeName"]}</td>`;
+                        visiableData += `<td class='field option'>${res[i]["EmployeeName"]}</td>`;
                         visiableData += `<td class='field must'><p class='showContent' data-aid='${res[i]["AnnID"]}'>${res[i]["Title"]}<p></td>`;
                         visiableData += "</tr>";
                     }
 
                     let html = `
-                    <div class='row showTable'>
-                        <table class='table table-responsive'>
-                            <thead>
-                                <th class='field must'>公告時間</th>
-                                <th class='field option'>發布人</th>
-                                <th class='field must'>標題</th>
-                            </thead>
-                            <tbody>
-                                ${visiableData}
-                            </tbody>
-                        </table>
-                    </div>
-                `;
+                        <div class='row showTable'>
+                            <table class='table table-responsive'>
+                                <thead>
+                                    <th class='field must'>公告時間</th>
+                                    <th class='field option'>發布人</th>
+                                    <th class='field must'>標題</th>
+                                </thead>
+                                <tbody>
+                                    ${visiableData}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
 
                     $("#content").html(html);
                 },

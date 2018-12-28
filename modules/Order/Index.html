@@ -19,6 +19,11 @@
         $("#header").load("/Order/include/html/header.html", function() {
             key = GetKey();
             SetHref();
+
+            if(GetPer() == 1){
+                $("#CreateOrder").hide();
+            }
+
             $.ajax({
                 url: "http://localhost/Order/Api/Order/All/",
                 method: "GET",
@@ -42,7 +47,6 @@
                         visiableData += `<td class='field must'>${res["table"][i]["CreateTime"]}</td>`;
                         visiableData += "</tr>";
                     }
-
                     let html = `
                             <div class='row showTable'>
                                 <table class='table table-responsive'>
@@ -277,8 +281,7 @@
                                     </button>
                                 </div>
                             </div>
-                            <hr/>
-                            <table class='table table-responsive'>
+                            <hr/><table class='table table-responsive'>
                                 <thead>
                                     <tr>
                                         <th class='field'>產品編號</th>
@@ -624,13 +627,11 @@
     <div id="header"></div>
     <div class="container">
         <div class="row">
-            <div class='col-sm-4 col-md-4 col-lg-4'>
-                <button id="CreateOrder">
+            <div class='col-sm-4 col-md-4 col-lg-4 text-center' style='margin-top: .5rem;'>
+                <button id="CreateOrder" class='btn btn-info'>
                     新增訂單
                 </button>
-            </div>
-            <div class='col-sm-4 col-md-4 col-lg-4'>
-                <button id="SearchOrder">
+                <button id="SearchOrder" class='btn btn-info'>
                     查詢訂單
                 </button>
             </div>

@@ -77,8 +77,7 @@
                     "Key": key
                 },
                 jsonType: true,
-                success: function(res) {
-                    
+                success: function(res) {                    
                     res = JSON.parse(res)["table"];
                     let visiableData = `<textarea class="form-control" id="Detail" cols="90" rows="20">${res[0]["Detail"]}</textarea>`;
                     let VisitDate = res[0]["VisitDate"].replace(" ","T");
@@ -470,13 +469,11 @@
     <div id="header"></div>
     <div class="container">
         <div class="row">
-            <div class='col-sm-4 col-md-4 col-lg-4'>
-                <button id="CreateOrder">
+            <div class='col-sm col-md text-center' style='margin-top: .5rem;'>
+                <button id="CreateOrder" class='btn btn-info'>
                     新增拜訪紀錄
                 </button>
-            </div>
-            <div class='col-sm-4 col-md-4 col-lg-4'>
-                <button id="SearchOrder">
+                <button id="SearchOrder" class='btn btn-info'>
                     查詢拜訪紀錄
                 </button>
             </div>

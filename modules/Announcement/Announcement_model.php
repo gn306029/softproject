@@ -59,10 +59,19 @@
 
             $aid = $dataArr["GET"]["data"];
 
-            if($aid != "All"){
-                return $this->Search_Once($aid);
-            }else{
+            if($aid == "All"){
                 return $this->Search_All();
+            }else if($aid == "condition"){
+                $condition = array(
+                    "aid"=>$dataArr["GET"]["aid"],
+                    "title"=>$dataArr["GET"]["title"],
+                    "publishid"=>$dataArr["GET"]["publishid"],
+                    "start"=>$dataArr["GET"]["start"],
+                    "end"=>$dataArr["GET"]["end"]
+                );
+                return $this->Search_By_Condition($condition);
+            }else{
+                return $this->Search_Once($aid);
             }
         }
         // 處理新增請求
@@ -129,6 +138,45 @@
                 $this->conn->rollBack();
                 return $result;
             }
+        }
+        // 條件查詢
+        public function Search_By_Condition($condition){
+            $parm = array();
+
+            $sql = "SELECT a.AnnID , PublishDate , Announcer , EmployeeName , Title
+                    FROM announoement As a
+                    LEFT JOIN employee ON a.Announcer = employee.EmployeeID
+                    WHERE ";
+
+            if($condition["aid"] != ""){
+                $sql .= "a.AnnID LIKE :aid AND ";
+                $parm[":aid"] = "%".$condition["aid"]."%";
+            }
+
+            if($condition["title"] != ""){
+                $sql .= "Title LIKE :title AND ";
+                $parm[":title"] = "%".$condition["title"]."%";
+            }
+
+            if($condition["publishid"] != ""){
+                $sql .= "Announcer LIKE :publishid AND ";
+                $parm[":publishid"] = "%".$condition["title"]."%";
+            }
+
+            if($condition["start"] != ""){
+                $sql .= "PublishDate >= :start AND ";
+                $parm[":start"] = $condition["start"];
+            }
+
+            if($condition["end"] != ""){
+                $sql .= "PublishDate <= :end AND ";
+                $parm[":end"] = $condition["end"];
+            }
+
+            $sql .= " 1=1";
+
+            $result = $this->Allresults($sql , $parm);
+            return $result;
         }
         // 單筆查詢
         public function Search_Once($aid){

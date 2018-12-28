@@ -59,25 +59,50 @@
 
             $data = $dataArr["GET"]["data"];
             $condition = array(
-                "eid"=>$dataArr["GET"]["eid"],
-                "eName"=>$dataArr["GET"]["eName"],
-                "eStart"=>$dataArr["GET"]["eStart"],
-                "eEnd"=>$dataArr["GET"]["eEnd"]
+                "eid"=>$dataArr["GET"]["id"],
+                "eName"=>$dataArr["GET"]["Name"],
+                "eStart"=>$dataArr["GET"]["Start"],
+                "eEnd"=>$dataArr["GET"]["End"]
             );
             $access = $dataArr["access"];
             $key = $dataArr["Key"];
             if($access == 0){
                 if($data == "employee"){
-                    //return $this->Search_Once($key_eid);
-                }else if($data == "customerA"){
                     $key_eid = $this->GetEid($key);
-                    return $this->Search_All_Cus($key_eid);
+                    $result = $this->Search_E_Condition($condition);
+                    // 過濾不屬於自己的業績
+                    $filterData = array();
+                    foreach ($result["table"] as $key => $value) {
+                        if($value["EmployeeID"] == $key_eid){
+                            array_push($filterData, $value);
+                        }
+                    }
+                    $result["table"] = $filterData;
+                    return $result;
+                }else if($data == "customer"){
+                    $key_eid = $this->GetEid($key);
+                    $result = $this->Search_C_Condition($condition);
+                    // 過濾不屬於自己所負責的客戶
+                    $filterData = array();
+                    foreach ($result["table"] as $key => $value) {
+                        if($value["EmployeeID"] == $key_eid){
+                            array_push($filterData, $value);
+                        }
+                    }
+                    $result["table"] = $filterData;
+                    return $result;
+                }else if($data == "product"){
+                    $key_eid = $this->GetEid($key);
+                    $condition["employeeID"] = $key_eid;
+                    return $this->Search_P_Condition($condition , true);
                 }
             }else{
                 if($data == "employee"){
                     return $this->Search_E_Condition($condition);
-                }else if($data == "customerA"){
-                    return $this->Search_All_Cus(null);
+                }else if($data == "customer"){
+                    return $this->Search_C_Condition($condition);
+                }else if($data == "product"){
+                    return $this->Search_P_Condition($condition , false);
                 }
             }
         }
@@ -103,72 +128,100 @@
             }
 
             if($condition["eStart"] != ""){
-                $sql .= "CONCAT(Year , '-' , LPAD(Month,2,'0') , '-' , LPAD(Day,2,'0')) < :eStart AND ";
-                $parm[":eStart"] = $condition["eid"];
+                $sql .= "CONCAT(Year , '-' , LPAD(Month,2,'0') , '-' , LPAD(Day,2,'0')) >=:eStart AND ";
+                $parm[":eStart"] = $condition["eStart"];
             }
 
             if($condition["eEnd"] != ""){
-                $sql .= "CONCAT(Year , '-' , LPAD(Month,2,'0') , '-' , LPAD(Day,2,'0')) < :eEnd AND ";
-                $parm[":eEnd"] = $condition["eid"];
+                $sql .= "CONCAT(Year , '-' , LPAD(Month,2,'0') , '-' , LPAD(Day,2,'0')) <= :eEnd AND ";
+                $parm[":eEnd"] = $condition["eEnd"];
             }
 
             $sql .= " 1=1 GROUP BY order_.EmployeeID , EmployeeName ORDER BY Sales DESC";
             $result = $this->Allresults($sql , $parm);
             return $result;
-
         }
-        // 業務業績單筆查詢
-        public function Search_Once($eid){
-            $sql = "SELECT order_.EmployeeID , EmployeeName , SUM(Num * Price) AS Sales
-                    FROM order_
-                    JOIN orderdetail ON order_.OrderID = orderdetail.OrderID
-                    JOIN employee ON order_.EmployeeID = employee.EmployeeID
-                    WHERE order_.employeeID = :eid
-                    GROUP BY EmployeeName";
-            $parm = array(
-                ":eid"=>$eid
-            );
+        // 根據條件查詢客戶的銷售紀錄
+        public function Search_C_Condition($condition){
+            $parm = array();
 
+            $sql = "SELECT order_.EmployeeID , order_.CustomerID , CustomerName , SUM(Num * Price) As Sales
+                    FROM order_
+                    LEFT JOIN orderdetail ON order_.OrderID = orderdetail.OrderID
+                    LEFT JOIN customer ON order_.CustomerID = customer.CustomerID
+                    WHERE ";
+
+            if($condition["eid"] != ""){
+                $sql .= "order_.CustomerID LIKE :eid AND ";
+                $parm[":eid"] = "%".$condition["eid"]."%";
+            }
+
+            if($condition["eName"] != ""){
+                $sql .= "CustomerName LIKE :eName AND ";
+                $parm[":eName"] = "%".$condition["eName"]."%";
+            }
+
+            if($condition["eStart"] != ""){
+                $sql .= "CONCAT(Year , '-' , LPAD(Month,2,'0') , '-' , LPAD(Day,2,'0')) >= :eStart AND ";
+                $parm[":eStart"] = $condition["eStart"];
+            }
+
+            if($condition["eEnd"] != ""){
+                $sql .= "CONCAT(Year , '-' , LPAD(Month,2,'0') , '-' , LPAD(Day,2,'0')) <= :eEnd AND ";
+                $parm[":eEnd"] = $condition["eEnd"];
+            }
+
+            $sql .= " 1=1 GROUP BY order_.EmployeeID , order_.CustomerID , CustomerName ORDER BY Sales DESC";
             $result = $this->Allresults($sql , $parm);
             return $result;
         }
-        // 業務業績查詢全部
-        public function Search_All(){
-
-            $sql = "SELECT order_.EmployeeID , EmployeeName ,SUM(Num * Price) as Sales
+        // 根據條件查詢產品的銷售紀錄
+        public function Search_P_Condition($condition , $hasAccess){
+            $parm = array();
+            // 若為一般業務 則只會顯示自己所負責的產品的銷售數據
+            if($hasAccess){
+                $sql = "SELECT EmployeeID , orderdetail.ProductID , ProductName , SUM(Num * Price) As Sales
                     FROM order_
-                    JOIN orderdetail ON order_.OrderID = orderdetail.OrderID
-                    JOIN employee ON order_.EmployeeID = employee.EmployeeID
-                    GROUP BY order_.EmployeeID , EmployeeName";
-
-            $result = $this->Allresults($sql , null);
-            return $result;
-        }
-        // 客戶銷售單筆查詢
-        public function Search_Once_Cus($cid){
-
-        }
-        // 客戶銷售全部查詢
-        public function Search_All_Cus($eid){
-
-            if($eid == null){
-                $particalSql = "";
-                $parm = null;
+                    LEFT JOIN orderdetail ON order_.OrderID = orderdetail.OrderID
+                    LEFT JOIN product ON orderdetail.ProductID = product.ProductID
+                    WHERE order_.EmployeeID = :employeeID AND ";
+                $parm[":employeeID"] = $condition["employeeID"];
             }else{
-                $particalSql = "WHERE EmployeeID = :eid";
-                $parm = array(
-                    ":eid"=>$eid
-                );
+                $sql = "SELECT orderdetail.ProductID , ProductName , SUM(Num * Price) As Sales
+                    FROM order_
+                    LEFT JOIN orderdetail ON order_.OrderID = orderdetail.OrderID
+                    LEFT JOIN product ON orderdetail.ProductID = product.ProductID
+                    WHERE ";
             }
 
-            $sql = "SELECT order_.CustomerID , CustomerName ,
-                    SUM(Num * Price) as Sales
-                    FROM order_
-                    JOIN orderdetail ON order_.OrderID = orderdetail.OrderID
-                    JOIN customer ON order_.CustomerID = customer.CustomerID
-                    $particalSql
-                    GROUP BY order_.CustomerID , CustomerName";
-            return $this->Allresults($sql , $parm);
+            if($condition["eid"] != ""){
+                $sql .= "orderdetail.ProductID LIKE :eid AND ";
+                $parm[":eid"] = "%".$condition["eid"]."%";
+            }
+
+            if($condition["eName"] != ""){
+                $sql .= "ProductName LIKE :eName AND ";
+                $parm[":eName"] = "%".$condition["eName"]."%";
+            }
+
+            if($condition["eStart"] != ""){
+                $sql .= "CONCAT(Year , '-' , LPAD(Month,2,'0') , '-' , LPAD(Day,2,'0')) >= :eStart AND ";
+                $parm[":eStart"] = $condition["eStart"];
+            }
+
+            if($condition["eEnd"] != ""){
+                $sql .= "CONCAT(Year , '-' , LPAD(Month,2,'0') , '-' , LPAD(Day,2,'0')) <= :eEnd AND ";
+                $parm[":eEnd"] = $condition["eEnd"];
+            }
+
+            if($hasAccess){
+                $sql .= " 1=1 GROUP BY EmployeeID , orderdetail.ProductID , ProductName ORDER BY Sales DESC";
+            }else{
+                $sql .= " 1=1 GROUP BY orderdetail.ProductID , ProductName ORDER BY Sales DESC";
+            }
+
+            $result = $this->Allresults($sql , $parm);
+            return $result;
         }
         // 依據 AccessKey 取得員工編號
         public function GetEid($key){
@@ -185,31 +238,6 @@
                 return null;
             }
         }
-        // 查詢該客戶是否為該業務所負責
-        public function CheckE2C($eid , $cid){
-            $sql = "SELECT EmployeeID
-                    FROM order_
-                    WHERE EmployeeID = :eid
-                    AND CustomerID = :cid";
-            $parm = array(
-                ":eid"=>$eid,
-                ":cid"=>$cid
-            );
-
-            $result = $this->result($sql , $parm);
-            if($result["status_code"] == 0){
-                if(!empty($result["table"])){
-                    return true;
-                }else{
-                    return false;
-                }
-            }else{
-                var_dump($result);
-                return false;
-            }
-        }
-
-
     }
 
 
