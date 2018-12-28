@@ -59,10 +59,14 @@
 
             $rid = $dataArr["GET"]["data"];
 
-            if($rid != "All"){
-                return $this->Search_Once($rid);
-            }else{
+            if ($rid == "All"){
                 return $this->Search_All();
+            }elseif ($rid == "Last") {
+                return $this->Last_VID();
+            }elseif ($rid == "Search") {
+                return $this->Search_Input($dataArr["GET"]);
+            }else{
+                return $this->Search_Once($rid);               
             }
         }
         // 處理新增紀錄的需求
@@ -74,16 +78,16 @@
                 "vid"=>$newData["vid"],
                 "cid"=>$newData["cid"],
                 "eid"=>$newData["eid"],
-                "detail"=>$newData["detail"],
-                "Time"=>$this->getNowTime()
+                "detail"=>$newData["Detail"],
+                "Time"=>$newData["Date"]
             );
-
             $res = $this->CreateVisitRecord($MainData);
             if($res["status_code"] == 0){
                 $this->conn->commit();
+                return $res;
             }else{
-                var_dump($res["status_message"]);
                 $this->conn->rollBack();
+                return $res;
             }
         }
         // 處理更新紀錄的需求
@@ -99,9 +103,10 @@
             $res = $this->UpdateVisitRecord($MainData);
             if($res["status_code"] == 0){
                 $this->conn->commit();
+                return $res;
             }else{
-                var_dump($res["status_message"]);
                 $this->conn->rollBack();
+                return $res;
             }
         }
 
@@ -139,7 +144,6 @@
         private function CreateVisitRecord($MainData){
             $sql = "INSERT INTO visitcustomerrecord
                     VALUES (:vid , :eid , :cid , :time , :detail)";
-
             $parm = array(
                 ":vid"=>$MainData["vid"],
                 ":eid"=>$MainData["eid"],
@@ -147,6 +151,16 @@
                 ":time"=>$MainData["Time"],
                 ":detail"=>$MainData["detail"]
             );
+            if ($MainData["Time"]=="now") {
+                $sql = "INSERT INTO visitcustomerrecord
+                    VALUES (:vid , :eid , :cid , NOW() , :detail)";
+                $parm = array(
+                    ":vid"=>$MainData["vid"],
+                    ":eid"=>$MainData["eid"],
+                    ":cid"=>$MainData["cid"],
+                    ":detail"=>$MainData["detail"]
+                );
+            }
 
             $result = $this->result($sql , $parm);
             return $result;
@@ -169,8 +183,32 @@
             $result = $this->result($sql , $parm);
             return $result;
         }
-
-
+        //最後一個ID
+        private function Last_VID(){
+            $sql = "select max(VisitID) AS VID from visitcustomerrecord";
+            $result = $this->Allresults($sql , null);
+            return $result;
+        }
+        //鍵入後搜尋
+        private function Search_Input($oid){
+            $sql = "
+                SELECT
+                    visitcustomerrecord.VisitID,
+                    visitcustomerrecord.CustomerID,
+                    visitcustomerrecord.EmployeeID,
+                    CustomerName,
+                    VisitDate
+                FROM
+                    visitcustomerrecord
+                LEFT JOIN customer ON visitcustomerrecord.CustomerID = customer.CustomerID
+                WHERE ".$oid["SearchKind"]." LIKE :oid 
+                ORDER BY VisitDate DESC";
+            $parm = array(
+                ":oid"=>"%".$oid["SearchInput"]."%"
+            );
+            $result = $this->Allresults($sql , $parm);
+            return $result;
+        }
 
     }
 
