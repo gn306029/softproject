@@ -1,0 +1,113 @@
+<script type="text/javascript">
+$("#SearchAnn").click(function() {
+
+    let html = `
+                <div class='container'>
+                    <div class='row'>
+                        <div class='col-12'>
+                            <div class='form-group'>
+                                <label for='s-input-aid'>
+                                    公告編號：
+                                </label>
+                                <input type='text' class='form-control' id='s-input-aid' name='s-input-aid' />
+                            </div>
+                            <div class='form-group'>
+                                <label for='s-input-title'>
+                                    公告標題：
+                                </label>
+                                <input type='text' class='form-control' id='s-input-title' name='s-input-title' />
+                            </div>
+                            <div class='form-group'>
+                                <label for='s-input-publish-id'>
+                                    發布人編號：
+                                </label>
+                                <input type='text' class='form-control' id='s-input-publish-id' name='s-input-publish-id' />
+                            </div>
+                            <div class='form-group'>
+                                <label for='s-input-start'>
+                                    起始日期：
+                                </label>
+                                <input type='date' class='form-control' id='s-input-start' name='s-input-start' />
+                            </div>
+                            <div class='form-group'>
+                                <label for='s-input-end'>
+                                    結束日期：
+                                </label>
+                                <input type='date' class='form-control' id='s-input-end' name='s-input-end' />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+    ShowModal("搜尋條件", html, "modal-ann");
+});
+
+$("#search-ann").click(function() {
+    $.ajax({
+        url: "/Order/Api/Announcement/condition/",
+        method: "GET",
+        data: {
+            Key: GetKey(),
+            aid: $("#s-input-aid").val(),
+            title: $("#s-input-title").val(),
+            publishid:$("#s-input-publish-id").val(),
+            start:$("#s-input-start").val(),
+            end:$("#s-input-end").val()
+        },
+        dataType:"json",
+        success: function(res) {
+
+            res = res["table"];
+            let visiableData = "";
+            for (let i in res) {
+                visiableData += "<tr>";
+                visiableData += `<td class='field must'>${res[i]["PublishDate"]}</td>`;
+                visiableData += `<td class='field must'>${res[i]["EmployeeName"]}</td>`;
+                visiableData += `<td class='field must'><p class='showContent' data-aid='${res[i]["AnnID"]}'>${res[i]["Title"]}<p></td>`;
+                visiableData += "</tr>";
+            }
+
+            let html = `
+                        <div class='row showTable'>
+                            <table class='table table-responsive'>
+                                <thead>
+                                    <th class='field must'>公告時間</th>
+                                    <th class='field option'>發布人</th>
+                                    <th class='field must'>標題</th>
+                                </thead>
+                                <tbody>
+                                    ${visiableData}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+
+            $("#content").html(html);
+            HideModal("modal-ann");
+        }
+    })
+});
+</script>
+<div class="Bar row">
+    <div class="col-md-3">
+        <button class="btn btn-default" id='SearchAnn'>查詢公告</button>
+    </div>
+</div>
+<div id="modal-ann" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Modal title</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body"></div>
+            <div class="modal-footer">
+                <button type="button" id='search-ann' class="btn btn-info">搜尋</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">關閉</button>
+            </div>
+        </div>
+    </div>
+</div>

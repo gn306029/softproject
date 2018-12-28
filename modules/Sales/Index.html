@@ -62,10 +62,10 @@
                     method:"GET",
                     data:{
                         Key:key,
-                        eid:$("#s-input-eid").val() == "" ? null : $("#s-input-eid").val(),
-                        eName:$("#s-input-ename").val() == "" ? null : $("#s-input-ename").val(),
-                        eStart:$("#s-input-estart").val() == "" ? null : $("#s-input-estart").val(),
-                        eEnd:$("#s-input-end").val() == "" ? null : $("#s-input-end").val()
+                        id:$("#s-input-eid").val() == "" ? null : $("#s-input-eid").val(),
+                        Name:$("#s-input-ename").val() == "" ? null : $("#s-input-ename").val(),
+                        Start:$("#s-input-estart").val() == "" ? null : $("#s-input-estart").val(),
+                        End:$("#s-input-end").val() == "" ? null : $("#s-input-end").val()
                     },
                     dataType:"json",
                     success:function(res){
@@ -77,7 +77,7 @@
                                     <thead>
                                         <th class='field'>業務編號</th>
                                         <th class='field'>業務姓名</th>
-                                        <th class='field'>歷史業績總額</th>
+                                        <th class='field'>查詢期間業績總額</th>
                                     </thead>
                                     <tbody>
                         `;
@@ -104,41 +104,167 @@
         });
 
         $("#search-by-customer").click(function(){
-            $.ajax({
-                url:"/Order/Api/Sales/customerA/",
-                method:"GET",
-                data:{
-                    Key:key
-                },
-                dataType:"json",
-                success:function(res){
-                    res = res["table"];
-                    let html = `
-                    <div class='row justify-content-center align-items-center'>
+            let html = `
+                <div class='container'>
+                    <div class='row'>
                         <div class='col-12'>
-                            <table class='table table-responsive'>
-                                <thead>
-                                    <th class='field'>客戶編號</th>
-                                    <th class='field'>客戶姓名</th>
-                                    <th class='field'>歷史購買總額</th>
-                                </thead>
-                                <tbody>
-                    `;
+                            <div class='form-group'>
+                                <label for='s-input-eid'>
+                                    客戶編號：
+                                </label>
+                                <input type='text' class='form-control' id='s-input-eid' name='s-input-eid' />
+                            </div>
+                            <div class='form-group'>
+                                <label for='s-input-ename'>
+                                    客戶姓名：
+                                </label>
+                                <input type='text' class='form-control' id='s-input-ename' name='s-input-ename' />
+                            </div>
+                            <div class='form-group'>
+                                <label for='s-input-estart'>
+                                    查詢開始時間：
+                                </label>
+                                <input type='date' class='form-control' id='s-input-estart' name='s-input-estart' />
+                            </div>
+                            <div class='form-group'>
+                                <label for='s-input-end'>
+                                    查詢結束時間：
+                                </label>
+                                <input type='date' class='form-control' id='s-input-end' name='s-input-end' />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
 
-                    for(let i in res){
-                        html += `
-                            <tr>
-                                <td class='field'>${res[i]["CustomerID"]}</td>
-                                <td class='field'>${res[i]["CustomerName"]}</td>
-                                <td class='field'>${res[i]["Sales"]}</td>
-                            </tr>
+            $("#modal-sales").off("click","#Search-by-condition").on("click","#Search-by-condition",function(){
+                $.ajax({
+                    url:"/Order/Api/Sales/customer/",
+                    method:"GET",
+                    data:{
+                        Key:key,
+                        id:$("#s-input-eid").val() == "" ? null : $("#s-input-eid").val(),
+                        Name:$("#s-input-ename").val() == "" ? null : $("#s-input-ename").val(),
+                        Start:$("#s-input-estart").val() == "" ? null : $("#s-input-estart").val(),
+                        End:$("#s-input-end").val() == "" ? null : $("#s-input-end").val()
+                    },
+                    dataType:"json",
+                    success:function(res){
+                        res = res["table"];
+                        let html = `
+                        <div class='row justify-content-center align-items-center'>
+                            <div class='col-12'>
+                                <table class='table table-responsive'>
+                                    <thead>
+                                        <th class='field'>負責業務</th>
+                                        <th class='field'>客戶編號</th>
+                                        <th class='field'>客戶姓名</th>
+                                        <th class='field'>查詢期間業績總額</th>
+                                    </thead>
+                                    <tbody>
                         `;
-                    }
 
-                    html += `</tbody></table>`;
-                    $("#content").html(html);
-                }
+                        for(let i in res){
+                            html += `
+                                <tr>
+                                    <td class='field'>${res[i]["EmployeeID"]}</td>
+                                    <td class='field'>${res[i]["CustomerID"]}</td>
+                                    <td class='field'>${res[i]["CustomerName"]}</td>
+                                    <td class='field'>${res[i]["Sales"]}</td>
+                                </tr>
+                            `;
+                        }
+
+                        html += `</tbody></table>`;
+                        $("#content").html(html);
+                        HideModal("modal-sales");
+                    }
+                });
             });
+
+            ShowModal("條件搜尋",html,"modal-sales");
+        });
+
+        $("#search-by-goods").click(function(){
+
+            let html = `
+                <div class='container'>
+                    <div class='row'>
+                        <div class='col-12'>
+                            <div class='form-group'>
+                                <label for='s-input-eid'>
+                                    產品編號：
+                                </label>
+                                <input type='text' class='form-control' id='s-input-eid' name='s-input-eid' />
+                            </div>
+                            <div class='form-group'>
+                                <label for='s-input-ename'>
+                                    產品姓名：
+                                </label>
+                                <input type='text' class='form-control' id='s-input-ename' name='s-input-ename' />
+                            </div>
+                            <div class='form-group'>
+                                <label for='s-input-estart'>
+                                    查詢開始時間：
+                                </label>
+                                <input type='date' class='form-control' id='s-input-estart' name='s-input-estart' />
+                            </div>
+                            <div class='form-group'>
+                                <label for='s-input-end'>
+                                    查詢結束時間：
+                                </label>
+                                <input type='date' class='form-control' id='s-input-end' name='s-input-end' />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            $("#modal-sales").off("click","#Search-by-condition").on("click","#Search-by-condition",function(){
+                $.ajax({
+                    url:"/Order/Api/Sales/product/",
+                    method:"GET",
+                    data:{
+                        Key:key,
+                        id:$("#s-input-eid").val() == "" ? null : $("#s-input-eid").val(),
+                        Name:$("#s-input-ename").val() == "" ? null : $("#s-input-ename").val(),
+                        Start:$("#s-input-estart").val() == "" ? null : $("#s-input-estart").val(),
+                        End:$("#s-input-end").val() == "" ? null : $("#s-input-end").val()
+                    },
+                    dataType:"json",
+                    success:function(res){
+                        res = res["table"];
+                        let html = `
+                        <div class='row justify-content-center align-items-center'>
+                            <div class='col-12'>
+                                <table class='table table-responsive'>
+                                    <thead>
+                                        <th class='field'>產品編號</th>
+                                        <th class='field'>產品名稱</th>
+                                        <th class='field'>查詢期間銷售業績</th>
+                                    </thead>
+                                    <tbody>
+                        `;
+
+                        for(let i in res){
+                            html += `
+                                <tr>
+                                    <td class='field'>${res[i]["ProductID"]}</td>
+                                    <td class='field'>${res[i]["ProductName"]}</td>
+                                    <td class='field'>${res[i]["Sales"]}</td>
+                                </tr>
+                            `;
+                        }
+
+                        html += `</tbody></table>`;
+                        $("#content").html(html);
+                        HideModal("modal-sales");
+                    }
+                });
+            });
+
+            ShowModal("條件搜尋",html,"modal-sales");
+
         });
     });
     </script>
